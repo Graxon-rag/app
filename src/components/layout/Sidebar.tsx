@@ -9,6 +9,7 @@ import {
   Cpu,
   Layers,
   Hexagon,
+  Github,
 } from "lucide-react";
 
 import ThemeToggle from "@/components/ui/ThemeToggle";
@@ -131,6 +132,11 @@ export default function Sidebar() {
 
         {/* Footer */}
         <div className="px-3 py-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+          <div className="flex gap-3 items-center">
+            <a href="https://github.com/Graxon-rag/graxon" target="_blank">
+              <Github className="h-4 w-4" />
+            </a>
+          </div>
           <ThemeToggle />
         </div>
       </div>

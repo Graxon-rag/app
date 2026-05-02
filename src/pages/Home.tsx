@@ -1,5 +1,6 @@
-import { Hexagon, GitBranch, Zap, ShieldCheck, Network } from "lucide-react";
+import { Hexagon, GitBranch, Zap, ShieldCheck, Network, Github } from "lucide-react";
 import { Link } from "react-router-dom";
+import logo from "@/assets/img/Graxon-wbg.png";
 
 const features = [
   {
@@ -36,9 +37,7 @@ export default function Home() {
         <div className="absolute top-0 right-0 w-72 h-72 bg-primary-500/5 dark:bg-primary-500/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none" />
         <div className="relative">
           <div className="flex items-center gap-3 mb-5">
-            <div className="w-11 h-11 rounded-xl bg-primary-600 flex items-center justify-center shadow-md shadow-primary-500/20">
-              <Hexagon size={20} className="text-white" strokeWidth={2} />
-            </div>
+            <img src={logo} alt="Graxon" width={80} />
             <div>
               <h2 className="font-display font-bold text-2xl text-zinc-900 dark:text-zinc-50">
                 Graxon
@@ -60,14 +59,27 @@ export default function Home() {
             single orchestration layer.
           </p>
 
-          <Link
-            to="/organizations"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold
-                       bg-primary-600 hover:bg-primary-700 text-white
-                       shadow-sm shadow-primary-500/20 transition-all duration-150"
-          >
-            View Organizations
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              to="/organizations"
+              className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg text-sm font-semibold
+               bg-primary-600 hover:bg-primary-700 text-white
+               shadow-sm shadow-primary-500/20 transition-all duration-150"
+            >
+              View Organizations
+            </Link>
+
+            <a
+              href="https://github.com/Graxon-rag/graxon"
+              target="_blank"
+              className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg
+               border border-border bg-background text-sm font-medium text-foreground
+               transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              <Github className="h-4 w-4" />
+              GitHub
+            </a>
+          </div>
         </div>
       </div>
 
