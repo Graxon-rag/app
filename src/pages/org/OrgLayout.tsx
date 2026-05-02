@@ -1,13 +1,20 @@
 import { Outlet, useParams, Navigate } from "react-router-dom";
-import { mockOrganizations } from "@/data/mockData";
+import { useOrgStore } from "@/store/orgStore";
+import { useEffect } from "react";
 
 export default function OrgLayout() {
   const { org_id } = useParams();
-  const org = mockOrganizations.find((o) => o.id === org_id);
+  const { orgs, getAllOrgs, isLoading } = useOrgStore();
 
-  if (!org) {
-    return <Navigate to="/organizations" replace />;
-  }
+  useEffect(() => {
+    if (orgs.length === 0) getAllOrgs();
+  }, []);
+
+  const org = orgs.find((o) => o.id === org_id);
+
+  if (isLoading) return null; // or <Loader />
+
+  if (!org) return <Navigate to="/organizations" replace />;
 
   return <Outlet />;
 }
