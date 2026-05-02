@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useOrgStore } from "@/store/orgStore";
 import type { OrgCreateInterface } from "@/interfaces/OrgInterface";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Loader2, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 function OrganizationIndex() {
@@ -64,20 +64,24 @@ function OrganizationIndex() {
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {orgs.map((org) => (
-            <Link
-              to={`/organizations/${org.id}`}
-              key={org.id}
-              className="p-4 rounded-xl border bg-white dark:bg-zinc-900 dark:border-zinc-800 space-y-2"
-            >
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <h2 className="font-medium">{org.name}</h2>
+            <div className="p-4 rounded-xl border bg-white dark:bg-zinc-900 dark:border-zinc-800 space-y-2">
+              <Link to={`/organizations/${org.id}`} className="space-y-2 flex justify-between">
+                <div>
+                  <div className="space-y-1">
+                    <h2 className="font-medium">{org.name}</h2>
 
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500 font-mono">
-                    <span className=" font-semibold">ID :</span> {org.id}
+                    <p className="text-xs text-zinc-400 dark:text-zinc-500 font-mono">
+                      <span className=" font-semibold">ID :</span> {org.id}
+                    </p>
+                  </div>
+                  <p className="text-sm text-zinc-500">
+                    <span className=" font-semibold">Description :</span> {org.description}
                   </p>
                 </div>
+                <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
+              </Link>
 
+              <div className="flex justify-end">
                 <button
                   onClick={() => setConfirmDeleteId(org.id)}
                   className="text-red-500 hover:text-red-600"
@@ -85,11 +89,7 @@ function OrganizationIndex() {
                   <Trash2 size={16} />
                 </button>
               </div>
-
-              <p className="text-sm text-zinc-500">
-                <span className=" font-semibold">Description :</span> {org.description}
-              </p>
-            </Link>
+            </div>
           ))}
         </div>
       )}
@@ -157,7 +157,11 @@ function OrganizationIndex() {
               </button>
 
               <button
-                onClick={handleDelete}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleDelete();
+                }}
                 className="px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
               >
                 Delete

@@ -8,13 +8,19 @@ export default function OrgLayout() {
 
   useEffect(() => {
     if (orgs.length === 0) getAllOrgs();
-  }, []);
+  }, [orgs.length, getAllOrgs]);
 
   const org = orgs.find((o) => o.id === org_id);
 
-  if (isLoading) return null; // or <Loader />
+  // Wait for data
+  if (isLoading || orgs.length === 0) {
+    return null; // or <Loader />
+  }
 
-  if (!org) return <Navigate to="/organizations" replace />;
+  // Only redirect if data is loaded AND org truly missing
+  if (!org) {
+    return <Navigate to="/organizations" replace />;
+  }
 
   return <Outlet />;
 }

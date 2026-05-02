@@ -96,9 +96,9 @@ export default function Header() {
           ))}
         </div>
 
-        <h1 className="text-base font-display font-bold text-zinc-900 dark:text-zinc-50 leading-tight">
+        {/* <h1 className="text-base font-display font-bold text-zinc-900 dark:text-zinc-50 leading-tight">
           {title}
-        </h1>
+        </h1> */}
       </div>
     </header>
   );
