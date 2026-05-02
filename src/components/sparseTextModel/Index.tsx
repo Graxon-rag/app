@@ -104,10 +104,14 @@ function SparseTextModelIndex() {
           {sparseTextModels?.map((m) => (
             <div
               key={m.id}
-              className="p-4 rounded-xl border bg-white dark:bg-zinc-900 dark:border-zinc-800 space-y-2"
+              className="p-4 rounded-xl border bg-white dark:bg-zinc-900 dark:border-zinc-800 space-y-3"
             >
               <div className="flex items-start justify-between">
-                <h2 className="font-medium">{m.name}</h2>
+                <div className="space-y-1">
+                  <h2 className="font-medium">{m.name}</h2>
+
+                  <p className="text-xs text-zinc-400 font-mono">ID: {m.id}</p>
+                </div>
 
                 <button
                   onClick={() => setConfirmDeleteId(m.id)}
@@ -117,13 +121,12 @@ function SparseTextModelIndex() {
                 </button>
               </div>
 
-              <p className="text-xs text-zinc-500">{m.description}</p>
-
               <div className="text-xs text-zinc-400 space-y-1">
                 <p>Provider: {m.provider}</p>
                 <p>Model: {m.model}</p>
                 <p>Size: {m.size_in_gb} GB</p>
               </div>
+              <p className="text-xs text-zinc-500">{m.description}</p>
             </div>
           ))}
         </div>
