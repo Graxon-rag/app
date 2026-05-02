@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { useLLMModelStore } from "@/store/llmModelStore";
 import { useModelProviderStore } from "@/store/modelProviderStore";
-import CreateLLMModelModal from "@/components/llmModel/CreateLLMModelModal";
-import { LLMModelInterface } from "@/interfaces/LLMModelInterface";
+import { useEmbeddingModelStore } from "@/store/embeddingModelStore";
+import CreateEmbeddingModelModal from "@/components/embeddingModel/CreateEmbeddingModelModal";
+import { EmbeddingModelInterface } from "@/interfaces/EmbeddingModelInterface";
 
-function LLMModelIndex() {
+function EmbeddingModelIndex() {
   const { org_id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const provider = searchParams.get("provider") || "openai";
 
-  const { getLLMModelProviders } = useModelProviderStore();
-  const { llmModels, getAllProviderLLMModels, deleteLLMModel } = useLLMModelStore();
+  const { getEmbeddingModelProviders } = useModelProviderStore();
+  const { embeddingModels, getAllProviderEmbeddingModels, deleteEmbeddingModel } =
+    useEmbeddingModelStore();
 
   const [providers, setProviders] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
@@ -22,17 +23,17 @@ function LLMModelIndex() {
 
   // Load providers
   useEffect(() => {
-    const loadProviders = async () => {
-      const data = await getLLMModelProviders();
+    const load = async () => {
+      const data = await getEmbeddingModelProviders();
       setProviders(data || []);
     };
-    loadProviders();
+    load();
   }, []);
 
-  // Fetch models when provider changes
+  // Fetch models by provider
   useEffect(() => {
     if (org_id && provider) {
-      getAllProviderLLMModels(org_id, provider);
+      getAllProviderEmbeddingModels(org_id, provider);
     }
   }, [org_id, provider]);
 
@@ -48,7 +49,7 @@ function LLMModelIndex() {
       return;
     }
 
-    await deleteLLMModel(org_id, provider, id);
+    await deleteEmbeddingModel(org_id, provider, id);
     setConfirmDelete(null);
     setDoubleConfirm(null);
   };
@@ -56,7 +57,7 @@ function LLMModelIndex() {
   return (
     <div className="space-y-6">
       {/* HEADER */}
-      <h1 className="text-xl font-semibold">LLM Models</h1>
+      <h1 className="text-xl font-semibold">Embedding Models</h1>
       <div className="flex items-center justify-between">
         {/* Provider Select */}
         <select
@@ -64,6 +65,7 @@ function LLMModelIndex() {
           onChange={(e) => handleProviderChange(e.target.value)}
           className="h-9 px-3 rounded-lg border bg-white dark:bg-zinc-900 dark:border-zinc-800"
         >
+          <option value="">Select Provider</option>
           {providers.map((p) => (
             <option key={p} value={p}>
               {p}
@@ -71,25 +73,25 @@ function LLMModelIndex() {
           ))}
         </select>
 
-        {/* Create Button */}
+        {/* Create */}
         <button
           onClick={() => setOpen(true)}
           disabled={!provider}
           className="inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-primary text-primary-foreground disabled:opacity-40"
         >
           <Plus size={14} />
-          New Model
+          New Embedding Model
         </button>
       </div>
 
       {/* GRID */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {llmModels.map((model: LLMModelInterface) => (
+        {embeddingModels.map((model: EmbeddingModelInterface) => (
           <div
             key={model.id}
             className="p-4 rounded-xl border bg-white dark:bg-zinc-900 dark:border-zinc-800 space-y-3"
           >
-            {/* Header */}
+            {/* HEADER */}
             <div className="flex justify-between">
               <div>
                 <h2 className="font-medium">{model.name}</h2>
@@ -101,7 +103,7 @@ function LLMModelIndex() {
               </button>
             </div>
 
-            {/* Info */}
+            {/* INFO */}
             <div className="text-sm text-zinc-500 space-y-1">
               <p>
                 <b>Provider:</b> {model.provider}
@@ -109,11 +111,14 @@ function LLMModelIndex() {
               <p>
                 <b>Model:</b> {model.model_name}
               </p>
+              <p>
+                <b>Dimension:</b> {model.dimension}
+              </p>
             </div>
 
             <p className="text-sm text-zinc-500">{model.description}</p>
 
-            {/* DELETE CONFIRM STEP 1 */}
+            {/* DELETE CONFIRM */}
             {confirmDelete === model.id && (
               <div className="flex justify-end gap-2 pt-2">
                 <button onClick={() => setConfirmDelete(null)} className="text-sm text-zinc-500">
@@ -130,9 +135,9 @@ function LLMModelIndex() {
       </div>
 
       {/* MODAL */}
-      <CreateLLMModelModal open={open} onClose={() => setOpen(false)} provider={provider} />
+      <CreateEmbeddingModelModal open={open} onClose={() => setOpen(false)} provider={provider} />
     </div>
   );
 }
 
-export default LLMModelIndex;
+export default EmbeddingModelIndex;

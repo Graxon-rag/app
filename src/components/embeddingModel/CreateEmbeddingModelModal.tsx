@@ -1,0 +1,114 @@
+import React, { useState } from "react";
+import { useParams } from "react-router-dom";
+import { useEmbeddingModelStore } from "@/store/embeddingModelStore";
+
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  provider: string;
+}
+
+export default function CreateEmbeddingModelModal({ open, onClose, provider }: Props) {
+  const { org_id } = useParams();
+  const { createEmbeddingModel } = useEmbeddingModelStore();
+
+  const [form, setForm] = useState({
+    name: "",
+    model_name: "",
+    model_id: "",
+    dimension: "",
+    description: "",
+  });
+
+  if (!open) return null;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleSubmit = async () => {
+    if (!org_id || !provider) return;
+
+    await createEmbeddingModel(org_id, {
+      org_id,
+      provider,
+      name: form.name,
+      model_name: form.model_name,
+      model_id: form.model_id,
+      dimension: Number(form.dimension),
+      description: form.description,
+    });
+
+    setForm({
+      name: "",
+      model_name: "",
+      model_id: "",
+      dimension: "",
+      description: "",
+    });
+
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+      <div className="w-full max-w-lg bg-zinc-950 border border-zinc-800 rounded-xl p-5 space-y-4">
+        <h2 className="text-lg font-semibold text-white">Create Embedding Model</h2>
+
+        <input
+          name="name"
+          placeholder="Name"
+          value={form.name}
+          onChange={handleChange}
+          className="w-full h-10 px-3 rounded bg-zinc-900 border border-zinc-800 text-white"
+        />
+
+        <input
+          name="model_name"
+          placeholder="Model Name"
+          value={form.model_name}
+          onChange={handleChange}
+          className="w-full h-10 px-3 rounded bg-zinc-900 border border-zinc-800 text-white"
+        />
+
+        <input
+          name="model_id"
+          placeholder="Model ID"
+          value={form.model_id}
+          onChange={handleChange}
+          className="w-full h-10 px-3 rounded bg-zinc-900 border border-zinc-800 text-white"
+        />
+
+        <input
+          name="dimension"
+          type="number"
+          placeholder="Dimension"
+          value={form.dimension}
+          onChange={handleChange}
+          className="w-full h-10 px-3 rounded bg-zinc-900 border border-zinc-800 text-white"
+        />
+
+        <textarea
+          name="description"
+          placeholder="Description"
+          value={form.description}
+          onChange={handleChange}
+          className="w-full p-2 rounded bg-zinc-900 border border-zinc-800 text-white"
+        />
+
+        <div className="flex justify-end gap-2">
+          <button onClick={onClose} className="h-9 px-4 border border-zinc-800 rounded text-white">
+            Cancel
+          </button>
+
+          <button onClick={handleSubmit} className="h-9 px-4 bg-primary text-white rounded">
+            Create
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

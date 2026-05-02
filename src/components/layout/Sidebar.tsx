@@ -38,12 +38,12 @@ const orgLinks = (orgId: string): SidebarLinkProps[] => [
   },
   {
     to: `/organizations/${orgId}/sparse-models`,
-    label: "Sparse Text Model",
+    label: "Sparse Model",
     icon: Braces,
   },
   {
     to: `/organizations/${orgId}/rerankers`,
-    label: "Reranker",
+    label: "Reranker Model",
     icon: ArrowUpDown,
   },
   {
