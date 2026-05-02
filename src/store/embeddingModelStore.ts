@@ -41,6 +41,7 @@ export const useEmbeddingModelStore = create<EmbeddingModelStoreInterface>((set,
       set({ embeddingModels: data });
     } catch (error) {
       console.log(error);
+      set({ embeddingModels: [] });
     }
   },
   getEmbeddingModel: async (orgId: string, id: string) => {

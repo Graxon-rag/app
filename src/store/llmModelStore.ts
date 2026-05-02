@@ -22,6 +22,7 @@ export const useLLMModelStore = create<LLMModelStore>((set, get) => ({
       set({ llmModels: data });
     } catch (error) {
       console.log(error);
+      set({ llmModels: [] });
     }
   },
   getLLMModel: async (orgId: string, id: string) => {

@@ -10,6 +10,7 @@ import {
   Layers,
   Hexagon,
   Github,
+  Shield,
 } from "lucide-react";
 
 import ThemeToggle from "@/components/ui/ThemeToggle";
@@ -55,6 +56,11 @@ const orgLinks = (orgId: string): SidebarLinkProps[] => [
     to: `/organizations/${orgId}/embedding-models`,
     label: "Embedding Model",
     icon: Layers,
+  },
+  {
+    to: `/organizations/${orgId}/model-credential`,
+    label: "Model Credential",
+    icon: Shield,
   },
 ];
 

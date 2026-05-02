@@ -12,6 +12,7 @@ const SparseModels = lazy(() => import("@/pages/org/SparseModels"));
 const Rerankers = lazy(() => import("@/pages/org/Rerankers"));
 const LLMModels = lazy(() => import("@/pages/org/LLMModels"));
 const EmbeddingModels = lazy(() => import("@/pages/org/EmbeddingModels"));
+const ModelCredential = lazy(() => import("@/pages/org/ModelCredential"));
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
               <Route path="rerankers" element={<Rerankers />} />
               <Route path="llm-models" element={<LLMModels />} />
               <Route path="embedding-models" element={<EmbeddingModels />} />
+              <Route path="model-credential" element={<ModelCredential />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
