@@ -48,6 +48,8 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
         return "bg-green-500 text-white";
       case "FAILED":
         return "bg-red-500 text-white";
+      case "QUEUED":
+        return "bg-yellow-500 text-white";
       default:
         return "bg-zinc-500 text-white";
     }

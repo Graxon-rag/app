@@ -24,11 +24,16 @@ interface DocumentStore {
 export const useDocumentStore = create<DocumentStore>((set, get) => ({
   documents: [],
   getAllDocuments: async (orgId: string, projectId: string) => {
-    const url = `/api/documents/${orgId}/projects/${projectId}/get/all`;
+    try {
+      const url = `/api/documents/${orgId}/projects/${projectId}/get/all`;
 
-    const response = await axiosClient.get(url);
+      const response = await axiosClient.get(url);
 
-    set({ documents: response.data?.data?.data ?? [] });
+      set({ documents: response.data?.data?.data ?? [] });
+    } catch (error) {
+      console.log(error);
+      set({ documents: [] });
+    }
   },
   getDocument: async (orgId: string, projectId: string, id: string) => {
     const url = `/api/documents/${orgId}/projects/${projectId}/get/${id}`;
