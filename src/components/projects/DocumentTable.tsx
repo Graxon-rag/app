@@ -1,15 +1,43 @@
 import React, { useEffect } from "react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { MoreVertical } from "lucide-react";
 import { useDocumentStore } from "@/store/documentStore";
+import { DocumentInterface } from "@/interfaces/DocumentInterface";
 
 function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string }) {
-  const { documents, getAllDocuments } = useDocumentStore();
+  const { documents, getAllDocuments, deleteDocument, getPresignedUrl } = useDocumentStore();
 
   useEffect(() => {
     getAllDocuments(orgId, projectId);
   }, [orgId, projectId]);
 
+  const handleView = async (doc: DocumentInterface) => {
+    const url = await getPresignedUrl(orgId, projectId, doc.bucket, doc.key);
+    // console.log("URL", url);
+
+    if (url) window.open(url, "_blank");
+  };
+
+  const handleObjectView = (doc: DocumentInterface) => {
+    const url = `${import.meta.env.VITE_MINIO_URL}/browser/${doc.bucket}/${doc.key}`;
+    window.open(url, "_blank");
+  };
+
+  const handleDelete = async (doc: DocumentInterface) => {
+    if (!confirm("Delete this document?")) return;
+    await deleteDocument(orgId, projectId, doc.id);
+    await getAllDocuments(orgId, projectId);
+  };
+
+  const handleProcess = async (doc: DocumentInterface) => {
+    console.log("mock processing", doc.id);
+
+    // mock update UI (optional improvement)
+    // you can also update store directly
+  };
+
   return (
-    <div className="rounded-xl border bg-white dark:bg-zinc-900 dark:border-zinc-800 overflow-hidden">
+    <div className="rounded-xl mb-10 border bg-white dark:bg-zinc-900 dark:border-zinc-800 overflow-hidden">
       <table className="w-full text-sm">
         <thead className="bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
           <tr>
@@ -26,40 +54,65 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
             <tr key={doc.id} className="border-t dark:border-zinc-800">
               <td className="p-3">{doc.name}</td>
               <td className="p-3">{doc.type}</td>
+
               <td className="p-3">
                 <span className="text-xs px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800">
                   {doc.status}
                 </span>
               </td>
+
               <td className="p-3">{new Date(doc.created_at).toLocaleString()}</td>
 
-              <td className="p-3 text-right space-x-2">
-                {/* PROCESS */}
-                {doc.status === "PENDING" && (
-                  <button className="text-xs px-2 py-1 bg-blue-600 text-white rounded">
-                    Process
-                  </button>
-                )}
+              {/* ✅ ACTION MENU */}
+              <td className="p-3 text-right">
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <button className="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                      <MoreVertical size={16} />
+                    </button>
+                  </DropdownMenu.Trigger>
 
-                {/* VIEW */}
-                <button className="text-xs px-2 py-1 bg-green-600 text-white rounded">View</button>
+                  <DropdownMenu.Content
+                    align="start"
+                    className="z-50 min-w-[160px] rounded-lg border bg-white dark:bg-zinc-900 dark:border-zinc-800 shadow-md p-1"
+                  >
+                    {/* PROCESS */}
+                    {doc.status === "PENDING" && (
+                      <DropdownMenu.Item
+                        onClick={() => handleProcess(doc)}
+                        className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      >
+                        Process
+                      </DropdownMenu.Item>
+                    )}
 
-                {/* OBJECT STORE */}
-                <button className="text-xs px-2 py-1 bg-purple-600 text-white rounded">
-                  Object
-                </button>
+                    {/* VIEW */}
+                    <DropdownMenu.Item
+                      onClick={() => handleView(doc)}
+                      className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    >
+                      View
+                    </DropdownMenu.Item>
 
-                {/* DELETE */}
-                <button
-                  onClick={() => {
-                    if (confirm("Delete this document?")) {
-                      console.log("delete", doc.id);
-                    }
-                  }}
-                  className="text-xs px-2 py-1 bg-red-600 text-white rounded"
-                >
-                  Delete
-                </button>
+                    {/* OBJECT STORE */}
+                    <DropdownMenu.Item
+                      onClick={() => handleObjectView(doc)}
+                      className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    >
+                      Open in Object Store
+                    </DropdownMenu.Item>
+
+                    <DropdownMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />
+
+                    {/* DELETE */}
+                    <DropdownMenu.Item
+                      onClick={() => handleDelete(doc)}
+                      className="px-3 py-2 text-left text-sm rounded-md cursor-pointer text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
+                    >
+                      Delete
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Root>
               </td>
             </tr>
           ))}

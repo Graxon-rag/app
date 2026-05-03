@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useProjectStore } from "@/store/projectStore";
 import DocumentUpload from "@/components/projects/DocumentUpload";
 import DocumentTable from "@/components/projects/DocumentTable";
+import QueryTab from "@/components/projects/QueryTab";
 
 type Section = "llm" | "embedding" | "sparse" | "reranker" | "llm_cred" | "embedding_cred" | null;
 
@@ -18,7 +19,7 @@ function ProjectDetails() {
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const tab = searchParams.get("tab") || "documents";
+  const tab = searchParams.get("tab") || "query";
 
   const setTab = (value: string) => {
     setSearchParams({ tab: value });
@@ -58,7 +59,7 @@ function ProjectDetails() {
   const cardClass = "p-4 rounded-xl border dark:border-zinc-800 cursor-pointer transition";
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto">
+    <div className="space-y-6 max-w-[1700px] mx-auto">
       {/* HEADER */}
       <div className="flex items-start justify-between gap-4">
         {/* LEFT SIDE */}
@@ -208,8 +209,16 @@ function ProjectDetails() {
       <div className="space-y-4">
         <div className="flex gap-2 border-b dark:border-zinc-800">
           <button
+            onClick={() => setTab("query")}
+            className={`px-4 py-2 ${
+              tab === "query" ? "border-b-2 border-primary-600 text-primary-600" : "text-zinc-500"
+            }`}
+          >
+            Query
+          </button>
+          <button
             onClick={() => setTab("documents")}
-            className={`px-4 py-2 text-sm ${
+            className={`px-4 py-2 ${
               tab === "documents"
                 ? "border-b-2 border-primary-600 text-primary-600"
                 : "text-zinc-500"
@@ -222,17 +231,23 @@ function ProjectDetails() {
           {/* <button onClick={() => setTab("settings")}>Settings</button> */}
         </div>
 
-        {tab === "documents" && org_id && (
+        {tab === "query" && org_id && (
           <>
-            {/* NOTE: project_id needed → you must select one */}
-            {/* For now you can pass selected project or first project */}
-
             {project_id && (
               <>
+                <QueryTab />
+              </>
+            )}
+          </>
+        )}
+        {tab === "documents" && org_id && (
+          <>
+            {project_id && (
+              <div className="flex flex-col gap-6 my-6 mt-10">
                 <DocumentUpload orgId={org_id} projectId={project_id} />
 
                 <DocumentTable orgId={org_id} projectId={project_id} />
-              </>
+              </div>
             )}
           </>
         )}
