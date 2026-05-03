@@ -123,6 +123,9 @@ function ProjectDetails() {
                 <b>ID:</b> {p.details?.embedding_model?.id}
               </p>
               <p>
+                <b>Provider:</b> {p.details?.embedding_model?.provider}
+              </p>
+              <p>
                 <b>Model:</b> {p.details?.embedding_model?.model_id}
               </p>
               <p>
@@ -160,6 +163,9 @@ function ProjectDetails() {
             <div className="mt-3 text-xs text-zinc-400 space-y-1">
               <p>
                 <b>ID:</b> {p.details?.reranker?.id}
+              </p>
+              <p>
+                <b>Provider:</b> {p.details?.reranker?.provider}
               </p>
               <p>
                 <b>Model:</b> {p.details?.reranker?.model}
