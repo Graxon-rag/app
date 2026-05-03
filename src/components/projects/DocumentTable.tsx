@@ -5,7 +5,8 @@ import { useDocumentStore } from "@/store/documentStore";
 import { DocumentInterface } from "@/interfaces/DocumentInterface";
 
 function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string }) {
-  const { documents, getAllDocuments, deleteDocument, getPresignedUrl } = useDocumentStore();
+  const { documents, getAllDocuments, deleteDocument, getPresignedUrl, submitForProcessDocument } =
+    useDocumentStore();
 
   useEffect(() => {
     getAllDocuments(orgId, projectId);
@@ -30,10 +31,26 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
   };
 
   const handleProcess = async (doc: DocumentInterface) => {
-    console.log("mock processing", doc.id);
-
-    // mock update UI (optional improvement)
-    // you can also update store directly
+    try {
+      await submitForProcessDocument(orgId, projectId, doc.id);
+      alert("Submitted for processing");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const getStatusStyles = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return "bg-gray-500 text-white";
+      case "PROCESSING":
+        return "bg-blue-500 text-white";
+      case "PROCESSED":
+        return "bg-green-500 text-white";
+      case "FAILED":
+        return "bg-red-500 text-white";
+      default:
+        return "bg-zinc-500 text-white";
+    }
   };
 
   return (
@@ -56,9 +73,11 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
               <td className="p-3">{doc.type}</td>
 
               <td className="p-3">
-                <span className="text-xs px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800">
-                  {doc.status}
-                </span>
+                <td className="p-3">
+                  <span className={`text-xs px-2 py-1 rounded ${getStatusStyles(doc.status)}`}>
+                    {doc.status}
+                  </span>
+                </td>
               </td>
 
               <td className="p-3">{new Date(doc.created_at).toLocaleString()}</td>

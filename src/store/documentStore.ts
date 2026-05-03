@@ -18,6 +18,7 @@ interface DocumentStore {
     bucket: string,
     key: string,
   ) => Promise<string | null>;
+  submitForProcessDocument: (orgId: string, projectId: string, id: string) => Promise<void>;
 }
 
 export const useDocumentStore = create<DocumentStore>((set, get) => ({
@@ -79,6 +80,22 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
 
       const response = await axiosClient.get(url);
       const data = response.data ?? null;
+
+      return data;
+    } catch (error) {
+      console.log(error);
+    }
+  },
+  submitForProcessDocument: async (orgId: string, projectId: string, id: string) => {
+    try {
+      const url = `/api/documents/${orgId}/projects/${projectId}/process/${id}`;
+
+      const response = await axiosClient.post(url);
+      const data = response.data?.data ?? null;
+
+      if (data) {
+        get().getAllDocuments(orgId, projectId);
+      }
 
       return data;
     } catch (error) {
