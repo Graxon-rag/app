@@ -75,10 +75,10 @@ function LLMModelIndex() {
         <button
           onClick={() => setOpen(true)}
           disabled={!provider}
-          className="inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-primary text-primary-foreground disabled:opacity-40"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700"
         >
           <Plus size={14} />
-          New Model
+          Add Model
         </button>
       </div>
 

@@ -89,7 +89,7 @@ function SparseTextModelIndex() {
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700"
         >
           <Plus size={16} />
-          Create Model
+          Add Model
         </button>
       </div>
 

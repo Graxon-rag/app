@@ -25,7 +25,7 @@ function ProjectIndex() {
         {/* CREATE BUTTON */}
         <button
           onClick={() => navigate("create")}
-          className="inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-primary text-white"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700"
         >
           <Plus size={14} />
           Create Project
