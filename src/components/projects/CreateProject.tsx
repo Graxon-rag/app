@@ -10,11 +10,16 @@ import { useProjectStore } from "@/store/projectStore";
 import type { CreateProjectInterface } from "@/interfaces/ProjectInterface";
 
 // ─── primitives ───────────────────────────────────────────────────────────────
-const LABEL = "block text-[11px] font-medium text-zinc-500 uppercase tracking-widest mb-1.5";
+const LABEL =
+  "block text-[11px] font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-1.5";
+
 const INPUT =
-  "w-full h-9 px-3 rounded-lg bg-zinc-900 border border-zinc-800 text-sm text-white placeholder-zinc-600 outline-none focus:border-zinc-600 transition-colors";
+  "w-full h-9 px-3 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-sm text-black dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 outline-none focus:border-zinc-500 transition-colors";
+
 const SELECT = INPUT + " appearance-none cursor-pointer";
-const CARD = "rounded-xl border border-zinc-800 bg-[#111113] p-4";
+
+const CARD =
+  "rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm";
 
 // ─── components ───────────────────────────────────────────────────────────────
 function SectionHeading({ dot, title, pill }: { dot: string; title: string; pill?: string }) {
@@ -23,7 +28,7 @@ function SectionHeading({ dot, title, pill }: { dot: string; title: string; pill
       <span className={`inline-block w-1.5 h-1.5 rounded-full ${dot}`} />
       <span className="text-xs font-medium text-zinc-400">{title}</span>
       {pill && (
-        <span className="text-[10px] px-1.5 py-0.5 rounded border border-zinc-800 bg-zinc-950 text-zinc-600">
+        <span className="text-[10px] px-1.5 py-0.5 rounded border border-zinc-800 bg-zinc-300 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-400">
           {pill}
         </span>
       )}
@@ -33,7 +38,7 @@ function SectionHeading({ dot, title, pill }: { dot: string; title: string; pill
 
 function Ghost({ children }: { children: React.ReactNode }) {
   return (
-    <div className="w-full h-9 px-3 flex items-center rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-600 text-sm select-none">
+    <div className="w-full h-9 px-3 flex items-center rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 text-sm select-none">
       {children}
     </div>
   );
@@ -216,8 +221,8 @@ export default function CreateProjectIndex() {
 
   // ── render ────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-black text-white p-6">
-      <div className="max-w-xl mx-auto space-y-3">
+    <div className="min-h-screen bg-zinc-50 dark:bg-black text-black dark:text-white p-6">
+      <div className="max-w-[1200px] mx-auto space-y-3">
         <div className="mb-5">
           <h1 className="text-lg font-medium text-white">Create project</h1>
           <p className="text-sm text-zinc-500 mt-0.5">Configure your retrieval pipeline below.</p>
@@ -359,13 +364,12 @@ export default function CreateProjectIndex() {
           onClick={async () => {
             try {
               await createProject(form.org_id, form);
-
               navigate(`/organizations/${form.org_id}/projects`);
             } catch (error) {
               console.error(error);
             }
           }}
-          className="w-full h-11 rounded-lg bg-white text-black text-sm font-medium hover:opacity-85 active:scale-[0.98] transition-all"
+          className="w-full h-11 rounded-lg bg-black dark:bg-white text-white dark:text-black text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all"
         >
           Create project
         </button>
