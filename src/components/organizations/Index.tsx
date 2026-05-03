@@ -13,6 +13,7 @@ function OrganizationIndex() {
     name: "",
     description: "",
   });
+  const [deleteInput, setDeleteInput] = useState("");
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -36,8 +37,19 @@ function OrganizationIndex() {
   const handleDelete = async () => {
     if (!confirmDeleteId) return;
 
+    const org = orgs.find((o) => o.id === confirmDeleteId);
+    if (!org) return;
+
+    const expected = `delete ${org.name}`;
+
+    if (deleteInput !== expected) {
+      return; // block delete
+    }
+
     await deleteOrg(confirmDeleteId);
+
     setConfirmDeleteId(null);
+    setDeleteInput("");
   };
 
   return (
@@ -137,20 +149,48 @@ function OrganizationIndex() {
       </Dialog.Root>
 
       {/* DELETE CONFIRM DIALOG */}
-      <Dialog.Root open={!!confirmDeleteId} onOpenChange={() => setConfirmDeleteId(null)}>
+      <Dialog.Root
+        open={!!confirmDeleteId}
+        onOpenChange={() => {
+          setConfirmDeleteId(null);
+          setDeleteInput("");
+        }}
+      >
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/40" />
 
-          <Dialog.Content className="fixed left-1/2 top-1/2 w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white dark:bg-zinc-900 p-6 space-y-4">
+          <Dialog.Content className="fixed left-1/2 top-1/2 w-[380px] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white dark:bg-zinc-900 p-6 space-y-4">
             <Dialog.Title className="text-lg font-semibold text-red-500">
-              Delete Organization?
+              Delete Organization
             </Dialog.Title>
 
-            <p className="text-sm text-zinc-500">This action cannot be undone.</p>
+            <p className="text-sm text-zinc-500">
+              This action is permanent. Type below to confirm deletion.
+            </p>
 
-            <div className="flex justify-end gap-2">
+            {/* Org name hint */}
+            <p className="text-xs text-zinc-400">
+              Type:{" "}
+              <span className="font-mono text-red-500">
+                delete {orgs.find((o) => o.id === confirmDeleteId)?.name}
+              </span>
+            </p>
+
+            {/* INPUT */}
+            <input
+              value={deleteInput}
+              onChange={(e) => setDeleteInput(e.target.value)}
+              placeholder="delete org_name"
+              className="w-full h-10 px-3 rounded-lg border bg-white dark:bg-zinc-800 dark:border-zinc-700 text-sm"
+            />
+
+            {/* ACTIONS */}
+            <div className="flex justify-end gap-2 pt-2">
               <button
-                onClick={() => setConfirmDeleteId(null)}
+                onClick={() => {
+                  setConfirmDeleteId(null);
+                  setDeleteInput("");
+                }}
                 className="px-3 py-2 rounded-lg border dark:border-zinc-700"
               >
                 Cancel
@@ -162,7 +202,10 @@ function OrganizationIndex() {
                   e.stopPropagation();
                   handleDelete();
                 }}
-                className="px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+                disabled={
+                  deleteInput !== `delete ${orgs.find((o) => o.id === confirmDeleteId)?.name}`
+                }
+                className="px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-40"
               >
                 Delete
               </button>

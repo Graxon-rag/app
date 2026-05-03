@@ -13,6 +13,8 @@ const Rerankers = lazy(() => import("@/pages/org/Rerankers"));
 const LLMModels = lazy(() => import("@/pages/org/LLMModels"));
 const EmbeddingModels = lazy(() => import("@/pages/org/EmbeddingModels"));
 const ModelCredential = lazy(() => import("@/pages/org/ModelCredential"));
+const CreateProject = lazy(() => import("@/pages/org/CreateProject"));
+const ProjectDetail = lazy(() => import("@/pages/org/ProjectDetail"));
 
 export default function App() {
   return (
@@ -25,6 +27,8 @@ export default function App() {
             <Route path="/organizations/:org_id" element={<OrgLayout />}>
               <Route index element={<Navigate to="projects" replace />} />
               <Route path="projects" element={<Projects />} />
+              <Route path="projects/create" element={<CreateProject />} />
+              <Route path="projects/:project_id" element={<ProjectDetail />} />
               <Route path="sparse-models" element={<SparseModels />} />
               <Route path="rerankers" element={<Rerankers />} />
               <Route path="llm-models" element={<LLMModels />} />
