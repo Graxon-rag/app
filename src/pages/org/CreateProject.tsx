@@ -1,7 +1,8 @@
+import CreateProjectIndex from "@/components/projects/CreateProject";
 import React from "react";
 
 function CreateProject() {
-  return <div>CreateProject</div>;
+  return <CreateProjectIndex />;
 }
 
 export default CreateProject;
