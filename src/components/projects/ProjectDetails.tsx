@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useProjectStore } from "@/store/projectStore";
+import DocumentUpload from "@/components/projects/DocumentUpload";
+import DocumentTable from "@/components/projects/DocumentTable";
 
 type Section = "llm" | "embedding" | "sparse" | "reranker" | "llm_cred" | "embedding_cred" | null;
 
@@ -13,6 +15,14 @@ function ProjectDetails() {
   const [confirmDelete, setConfirmDelete] = useState("");
   const [openDelete, setOpenDelete] = useState(false);
   const navigate = useNavigate();
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const tab = searchParams.get("tab") || "documents";
+
+  const setTab = (value: string) => {
+    setSearchParams({ tab: value });
+  };
 
   useEffect(() => {
     if (org_id && project_id) {
@@ -193,6 +203,39 @@ function ProjectDetails() {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex gap-2 border-b dark:border-zinc-800">
+          <button
+            onClick={() => setTab("documents")}
+            className={`px-4 py-2 text-sm ${
+              tab === "documents"
+                ? "border-b-2 border-primary-600 text-primary-600"
+                : "text-zinc-500"
+            }`}
+          >
+            Documents
+          </button>
+
+          {/* future tabs */}
+          {/* <button onClick={() => setTab("settings")}>Settings</button> */}
+        </div>
+
+        {tab === "documents" && org_id && (
+          <>
+            {/* NOTE: project_id needed → you must select one */}
+            {/* For now you can pass selected project or first project */}
+
+            {project_id && (
+              <>
+                <DocumentUpload orgId={org_id} projectId={project_id} />
+
+                <DocumentTable orgId={org_id} projectId={project_id} />
+              </>
+            )}
+          </>
+        )}
       </div>
 
       {openDelete && (
