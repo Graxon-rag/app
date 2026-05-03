@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useProjectStore } from "@/store/projectStore";
 
 type Section = "llm" | "embedding" | "sparse" | "reranker" | "llm_cred" | "embedding_cred" | null;
@@ -12,6 +12,7 @@ function ProjectDetails() {
   const [active, setActive] = useState<Section>(null);
   const [confirmDelete, setConfirmDelete] = useState("");
   const [openDelete, setOpenDelete] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (org_id && project_id) {
@@ -34,6 +35,8 @@ function ProjectDetails() {
 
     setOpenDelete(false);
     setConfirmDelete("");
+
+    navigate(`/organizations/${org_id}/projects`);
   };
 
   const p = selectedProject;

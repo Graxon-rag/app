@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-
+import { useParams, useNavigate } from "react-router-dom";
 import { useLLMModelStore } from "@/store/llmModelStore";
 import { useEmbeddingModelStore } from "@/store/embeddingModelStore";
 import { useSparseTextModelStore } from "@/store/sparseTextModelStore";
 import { useReRankerModelStore } from "@/store/reRankerModelStore";
 import { useModelCredentialStore } from "@/store/modelCredentialStore";
+import { useModelProviderStore } from "@/store/modelProviderStore";
 import { useProjectStore } from "@/store/projectStore";
 import type { CreateProjectInterface } from "@/interfaces/ProjectInterface";
 
@@ -16,6 +16,7 @@ const INPUT =
 const SELECT = INPUT + " appearance-none cursor-pointer";
 const CARD = "rounded-xl border border-zinc-800 bg-[#111113] p-4";
 
+// ─── components ───────────────────────────────────────────────────────────────
 function SectionHeading({ dot, title, pill }: { dot: string; title: string; pill?: string }) {
   return (
     <div className="flex items-center gap-2 mb-3">
@@ -40,6 +41,7 @@ function Ghost({ children }: { children: React.ReactNode }) {
 
 function ProviderRow({
   providers,
+  providerValue,
   onProviderChange,
   modelOptions,
   modelValue,
@@ -48,6 +50,7 @@ function ProviderRow({
   modelLabel = "Model",
 }: {
   providers: string[];
+  providerValue: string;
   onProviderChange: (p: string) => void;
   modelOptions: { id: string; name: string }[] | null;
   modelValue: string;
@@ -63,7 +66,7 @@ function ProviderRow({
         <label className={LABEL}>Provider</label>
         <select
           className={SELECT}
-          defaultValue=""
+          value={providerValue}
           onChange={(e) => onProviderChange(e.target.value)}
         >
           <option value="" disabled>
@@ -76,6 +79,7 @@ function ProviderRow({
           ))}
         </select>
       </div>
+
       <div>
         <label className={LABEL}>{modelLabel}</label>
         {loading ? (
@@ -101,10 +105,6 @@ function ProviderRow({
   );
 }
 
-// ─── LLM providers — hardcoded to match your store's fallback ────────────────
-const LLM_PROVIDERS = ["openai", "gemini", "claude", "deepseek"];
-const EMB_PROVIDERS = ["openai", "gemini", "voyage"];
-
 // ─── page ─────────────────────────────────────────────────────────────────────
 export default function CreateProjectIndex() {
   const { org_id } = useParams<{ org_id: string }>();
@@ -114,8 +114,12 @@ export default function CreateProjectIndex() {
   const { embeddingModels, getAllProviderEmbeddingModels } = useEmbeddingModelStore();
   const { sparseTextModels, getAllSparseTextModels } = useSparseTextModelStore();
   const { reRankerModels, getAllReRankerModels } = useReRankerModelStore();
-  const { modelCredentials, getAllModelCredentials } = useModelCredentialStore();
+  const { getAllModelCredentials } = useModelCredentialStore();
+  const { getLLMModelProviders, getEmbeddingModelProviders } = useModelProviderStore();
 
+  const navigate = useNavigate();
+
+  // ── form ──────────────────────────────────────────────────────────────────
   const [form, setForm] = useState<CreateProjectInterface>({
     org_id: org_id ?? "",
     name: "",
@@ -131,17 +135,40 @@ export default function CreateProjectIndex() {
   const patch = (partial: Partial<CreateProjectInterface>) =>
     setForm((prev) => ({ ...prev, ...partial }));
 
+  // ── providers from API ────────────────────────────────────────────────────
+  const [llmProviders, setLlmProviders] = useState<string[]>([]);
+  const [embProviders, setEmbProviders] = useState<string[]>([]);
+
+  // ── controlled provider selections ───────────────────────────────────────
+  const [llmProvider, setLlmProvider] = useState("");
+  const [embProvider, setEmbProvider] = useState("");
+  const [llmCredProvider, setLlmCredProvider] = useState("");
+  const [embCredProvider, setEmbCredProvider] = useState("");
+
+  // ── model loading flags ───────────────────────────────────────────────────
   const [llmLoading, setLlmLoading] = useState(false);
   const [embLoading, setEmbLoading] = useState(false);
-  const [credLoading, setCredLoading] = useState(false);
 
+  // ── credential local state (independent per picker) ───────────────────────
+  const [llmCredentials, setLlmCredentials] = useState<{ id: string; name: string }[] | null>(null);
+  const [embCredentials, setEmbCredentials] = useState<{ id: string; name: string }[] | null>(null);
+  const [llmCredLoading, setLlmCredLoading] = useState(false);
+  const [embCredLoading, setEmbCredLoading] = useState(false);
+
+  // ── mount ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!org_id) return;
+
     getAllSparseTextModels(org_id);
     getAllReRankerModels(org_id);
+
+    getLLMModelProviders().then((res) => setLlmProviders(res ?? []));
+    getEmbeddingModelProviders().then((res) => setEmbProviders(res ?? []));
   }, [org_id]);
 
+  // ── handlers ──────────────────────────────────────────────────────────────
   const handleLLMProvider = async (provider: string) => {
+    setLlmProvider(provider);
     patch({ llm_model_id: "" });
     if (!provider) return;
     setLlmLoading(true);
@@ -150,6 +177,7 @@ export default function CreateProjectIndex() {
   };
 
   const handleEmbProvider = async (provider: string) => {
+    setEmbProvider(provider);
     patch({ embedding_model_id: "" });
     if (!provider) return;
     setEmbLoading(true);
@@ -157,18 +185,36 @@ export default function CreateProjectIndex() {
     setEmbLoading(false);
   };
 
-  const handleCredProvider = async (provider: string) => {
-    patch({ llm_model_credential_id: "", embedding_model_credential_id: "" });
+  const handleLLMCredProvider = async (provider: string) => {
+    setLlmCredProvider(provider);
+    patch({ llm_model_credential_id: "" });
+    setLlmCredentials(null);
     if (!provider) return;
-    setCredLoading(true);
+    setLlmCredLoading(true);
     await getAllModelCredentials(org_id!, provider);
-    setCredLoading(false);
+    // store has been set — snapshot it into local state immediately
+    const snapshot = useModelCredentialStore.getState().modelCredentials;
+    setLlmCredentials(snapshot);
+    setLlmCredLoading(false);
   };
 
-  // null-safe helpers — stores initialize to null, not []
+  const handleEmbCredProvider = async (provider: string) => {
+    setEmbCredProvider(provider);
+    patch({ embedding_model_credential_id: "" });
+    setEmbCredentials(null);
+    if (!provider) return;
+    setEmbCredLoading(true);
+    await getAllModelCredentials(org_id!, provider);
+    const snapshot = useModelCredentialStore.getState().modelCredentials;
+    setEmbCredentials(snapshot);
+    setEmbCredLoading(false);
+  };
+
+  // ── null-safe store values ────────────────────────────────────────────────
   const safeSparse = sparseTextModels ?? [];
   const safeRerankers = reRankerModels ?? [];
 
+  // ── render ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-black text-white p-6">
       <div className="max-w-xl mx-auto space-y-3">
@@ -200,11 +246,12 @@ export default function CreateProjectIndex() {
           </div>
         </div>
 
-        {/* LLM */}
+        {/* LLM model */}
         <div className={CARD}>
           <SectionHeading dot="bg-violet-500" title="LLM model" />
           <ProviderRow
-            providers={LLM_PROVIDERS}
+            providers={llmProviders}
+            providerValue={llmProvider}
             onProviderChange={handleLLMProvider}
             modelOptions={llmModels}
             modelValue={form.llm_model_id}
@@ -213,11 +260,12 @@ export default function CreateProjectIndex() {
           />
         </div>
 
-        {/* Embedding */}
+        {/* Embedding model */}
         <div className={CARD}>
           <SectionHeading dot="bg-sky-500" title="Embedding model" />
           <ProviderRow
-            providers={EMB_PROVIDERS}
+            providers={embProviders}
+            providerValue={embProvider}
             onProviderChange={handleEmbProvider}
             modelOptions={embeddingModels}
             modelValue={form.embedding_model_id}
@@ -226,7 +274,7 @@ export default function CreateProjectIndex() {
           />
         </div>
 
-        {/* Sparse */}
+        {/* Sparse model */}
         <div className={CARD}>
           <SectionHeading dot="bg-emerald-500" title="Sparse model" pill="loaded on mount" />
           <label className={LABEL}>Select model</label>
@@ -248,7 +296,7 @@ export default function CreateProjectIndex() {
           )}
         </div>
 
-        {/* Reranker */}
+        {/* Reranker model */}
         <div className={CARD}>
           <SectionHeading dot="bg-amber-500" title="Reranker model" pill="loaded on mount" />
           <label className={LABEL}>Select model</label>
@@ -273,21 +321,50 @@ export default function CreateProjectIndex() {
         {/* Credentials */}
         <div className={CARD}>
           <SectionHeading dot="bg-rose-500" title="Credentials" />
-          <ProviderRow
-            providers={[...new Set([...LLM_PROVIDERS, ...EMB_PROVIDERS])]}
-            onProviderChange={handleCredProvider}
-            modelOptions={modelCredentials}
-            modelValue={form.llm_model_credential_id}
-            onModelChange={(id) =>
-              patch({ llm_model_credential_id: id, embedding_model_credential_id: id })
-            }
-            loading={credLoading}
-            modelLabel="Credential"
-          />
+
+          {/* LLM credential */}
+          <div className="mb-4">
+            <p className="text-xs text-zinc-500 mb-2">LLM credential</p>
+            <ProviderRow
+              providers={llmProviders}
+              providerValue={llmCredProvider}
+              onProviderChange={handleLLMCredProvider}
+              modelOptions={llmCredentials}
+              modelValue={form.llm_model_credential_id}
+              onModelChange={(id) => patch({ llm_model_credential_id: id })}
+              loading={llmCredLoading}
+              modelLabel="Credential"
+            />
+          </div>
+
+          <div className="border-t border-zinc-800 my-3" />
+
+          {/* Embedding credential */}
+          <div>
+            <p className="text-xs text-zinc-500 mb-2">Embedding credential</p>
+            <ProviderRow
+              providers={embProviders}
+              providerValue={embCredProvider}
+              onProviderChange={handleEmbCredProvider}
+              modelOptions={embCredentials}
+              modelValue={form.embedding_model_credential_id}
+              onModelChange={(id) => patch({ embedding_model_credential_id: id })}
+              loading={embCredLoading}
+              modelLabel="Credential"
+            />
+          </div>
         </div>
 
         <button
-          onClick={() => createProject(form.org_id, form)}
+          onClick={async () => {
+            try {
+              await createProject(form.org_id, form);
+
+              navigate(`/organizations/${form.org_id}/projects`);
+            } catch (error) {
+              console.error(error);
+            }
+          }}
           className="w-full h-11 rounded-lg bg-white text-black text-sm font-medium hover:opacity-85 active:scale-[0.98] transition-all"
         >
           Create project
