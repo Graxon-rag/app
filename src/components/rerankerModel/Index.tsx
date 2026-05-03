@@ -27,7 +27,7 @@ function ReRankerModelIndex() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-[1450px] mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Re Ranker Models</h1>

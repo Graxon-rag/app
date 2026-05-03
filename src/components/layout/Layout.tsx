@@ -12,7 +12,7 @@ export default function Layout() {
       >
         <Header />
         <main className="flex-1 overflow-y-auto">
-          <div className="px-6 py-6 max-w-6xl mx-auto animate-fade-in">
+          <div className="px-6 py-6 w-full mx-auto animate-fade-in">
             <Outlet />
           </div>
         </main>

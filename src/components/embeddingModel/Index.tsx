@@ -55,8 +55,9 @@ function EmbeddingModelIndex() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-[1450px] mx-auto">
       {/* HEADER */}
+      <h1 className="text-xl font-semibold">Embedding Models</h1>
       <div className="flex items-center justify-between">
         {/* Provider Select */}
         <select

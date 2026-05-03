@@ -58,7 +58,7 @@ function ProjectDetails() {
   const cardClass = "p-4 rounded-xl border dark:border-zinc-800 cursor-pointer transition";
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 max-w-[1600px] mx-auto">
       {/* HEADER */}
       <div className="flex items-start justify-between gap-4">
         {/* LEFT SIDE */}
