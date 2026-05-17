@@ -85,11 +85,17 @@ export default function CreateLLMModelModal({ open, onClose, provider }: Props) 
         />
 
         <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="h-9 px-4 border border-zinc-800 rounded text-white">
+          <button
+            onClick={onClose}
+            className="h-9 px-4 border border-zinc-800 rounded text-white hover:text-zinc-400"
+          >
             Cancel
           </button>
 
-          <button onClick={handleSubmit} className="h-9 px-4 bg-primary text-white rounded">
+          <button
+            onClick={handleSubmit}
+            className="h-9 px-4 bg-primary text-white rounded hover:text-zinc-400"
+          >
             Create
           </button>
         </div>

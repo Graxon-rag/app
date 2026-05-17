@@ -113,14 +113,14 @@ export default function CreateReRankerModelModal({ open, onClose }: Props) {
         <div className="flex justify-end gap-2 pt-2">
           <button
             onClick={onClose}
-            className="h-9 px-4 rounded-lg border border-zinc-800 text-zinc-300"
+            className="h-9 px-4 rounded-lg border border-zinc-800 text-zinc-300 hover:text-zinc-400"
           >
             Cancel
           </button>
 
           <button
             onClick={handleSubmit}
-            className="h-9 px-4 rounded-lg bg-primary text-primary-foreground"
+            className="h-9 px-4 rounded-lg border border-zinc-800 text-zinc-300 hover:text-zinc-400"
           >
             Create
           </button>

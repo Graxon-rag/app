@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowUpRight, Plus } from "lucide-react";
+import { ArrowUpRight, Plus, FolderOpen, Sparkles } from "lucide-react";
 import { useProjectStore } from "@/store/projectStore";
 import { ProjectInterface } from "@/interfaces/ProjectInterface";
 
@@ -15,6 +15,8 @@ function ProjectIndex() {
       getAllProjects(org_id);
     }
   }, [org_id]);
+
+  const isEmpty = !projects || projects.length === 0;
 
   return (
     <div className="space-y-6 max-w-[1450px] mx-auto">
@@ -32,26 +34,49 @@ function ProjectIndex() {
         </button>
       </div>
 
-      {/* GRID */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {(projects || []).map((project: ProjectInterface) => (
-          <div
-            key={project.id}
-            onClick={() => navigate(project.id)}
-            className="cursor-pointer p-4 rounded-xl border flex  justify-between bg-white dark:bg-zinc-900 dark:border-zinc-800 hover:shadow-sm transition"
-            title={`Open ${project.name}`}
-          >
-            <div>
-              <h2 className="font-medium">{project.name}</h2>
-
-              <p className="text-xs text-zinc-400">{project.readable_id}</p>
-
-              <p className="text-sm text-zinc-500 mt-2">{project.description}</p>
-            </div>
-            <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
+      {/* EMPTY STATE */}
+      {isEmpty ? (
+        <div className="flex flex-col items-center justify-center py-24 px-6 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50 text-center">
+          <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-50 dark:bg-primary-900/30 mb-5">
+            <FolderOpen className="w-8 h-8 text-primary-500" />
           </div>
-        ))}
-      </div>
+
+          <h2 className="text-base font-semibold text-zinc-800 dark:text-zinc-100 mb-1">
+            No projects yet
+          </h2>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xs mb-6">
+            Be the first to create a project. Organize your work, collaborate with your team, and
+            ship faster.
+          </p>
+
+          <button
+            onClick={() => navigate("create")}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 transition"
+          >
+            <Sparkles size={14} />
+            Create your first project
+          </button>
+        </div>
+      ) : (
+        /* GRID */
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {projects.map((project: ProjectInterface) => (
+            <div
+              key={project.id}
+              onClick={() => navigate(project.id)}
+              className="cursor-pointer p-4 rounded-xl border flex justify-between bg-white dark:bg-zinc-900 dark:border-zinc-800 hover:shadow-sm transition"
+              title={`Open ${project.name}`}
+            >
+              <div>
+                <h2 className="font-medium">{project.name}</h2>
+                <p className="text-xs text-zinc-400">{project.readable_id}</p>
+                <p className="text-sm text-zinc-500 mt-2">{project.description}</p>
+              </div>
+              <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
