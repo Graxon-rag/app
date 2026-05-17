@@ -1,16 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useEmbeddingModelStore } from "@/store/embeddingModelStore";
+import {
+  GeminiEmbeddingModelDimension,
+  OpenaiEmbeddingModelDimension,
+  VoyageEmbeddingModelDimension,
+} from "@/constants/embeddingModel";
+
+// Helper mapping to get options based on the provider string
+const PROVIDER_DIMENSIONS: Record<string, string[]> = {
+  gemini: Object.values(GeminiEmbeddingModelDimension),
+  openai: Object.values(OpenaiEmbeddingModelDimension),
+  voyage: Object.values(VoyageEmbeddingModelDimension),
+};
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  provider: string;
+  provider: string; // e.g., "openai", "gemini", or "voyage"
 }
 
 export default function CreateEmbeddingModelModal({ open, onClose, provider }: Props) {
   const { org_id } = useParams();
   const { createEmbeddingModel } = useEmbeddingModelStore();
+
+  // Get the available dimensions for the current provider (fallback to empty array)
+  const availableDimensions = PROVIDER_DIMENSIONS[provider.toLowerCase()] || [];
 
   const [form, setForm] = useState({
     name: "",
@@ -20,9 +35,18 @@ export default function CreateEmbeddingModelModal({ open, onClose, provider }: P
     description: "",
   });
 
+  // Automatically set the first available dimension when the provider changes or modal opens
+  useEffect(() => {
+    if (open && availableDimensions.length > 0) {
+      setForm((prev) => ({ ...prev, dimension: availableDimensions[0] }));
+    }
+  }, [open, provider]);
+
   if (!open) return null;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
     setForm((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
@@ -46,7 +70,7 @@ export default function CreateEmbeddingModelModal({ open, onClose, provider }: P
       name: "",
       model_name: "",
       model_id: "",
-      dimension: "",
+      dimension: availableDimensions[0] || "",
       description: "",
     });
 
@@ -82,14 +106,23 @@ export default function CreateEmbeddingModelModal({ open, onClose, provider }: P
           className="w-full h-10 px-3 rounded bg-zinc-900 border border-zinc-800 text-white"
         />
 
-        <input
-          name="dimension"
-          type="number"
-          placeholder="Dimension"
-          value={form.dimension}
-          onChange={handleChange}
-          className="w-full h-10 px-3 rounded bg-zinc-900 border border-zinc-800 text-white"
-        />
+        {/* Replaced input with select dropdown */}
+        <div className="space-y-1">
+          <label className="text-xs text-zinc-400 pl-1">Dimension</label>
+          <select
+            name="dimension"
+            value={form.dimension}
+            onChange={handleChange}
+            className="w-full h-10 px-3 rounded bg-zinc-900 border border-zinc-800 text-white focus:outline-none"
+          >
+            {availableDimensions.map((dim) => (
+              <option key={dim} value={dim} className="bg-zinc-900">
+                {dim}
+              </option>
+            ))}
+            {availableDimensions.length === 0 && <option value="">Select a provider first</option>}
+          </select>
+        </div>
 
         <textarea
           name="description"
