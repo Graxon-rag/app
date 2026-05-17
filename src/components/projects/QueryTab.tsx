@@ -1,5 +1,7 @@
+import QueryIndex from "../query/Index";
+
 function QueryTab() {
-  return <div>QueryTab</div>;
+  return <QueryIndex />;
 }
 
 export default QueryTab;

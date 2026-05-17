@@ -490,7 +490,7 @@ function QueryIndex({ doc_id: propDocId }: QueryIndexProps) {
   const hasLexicalAnalysis = !!response?.lexical_engine_analysis;
 
   return (
-    <div className="space-y-6 max-w-[1450px] mx-auto p-4 md:p-6 text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
+    <div className="space-y-6 max-w-[1650px] mx-auto p-4 md:p-6 text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
       {/* ── Header ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-5 gap-4">
         <div>
