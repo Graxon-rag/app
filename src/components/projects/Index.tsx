@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { ArrowUpRight, Plus } from "lucide-react";
 import { useProjectStore } from "@/store/projectStore";
 import { ProjectInterface } from "@/interfaces/ProjectInterface";
 
@@ -38,13 +38,17 @@ function ProjectIndex() {
           <div
             key={project.id}
             onClick={() => navigate(project.id)}
-            className="cursor-pointer p-4 rounded-xl border bg-white dark:bg-zinc-900 dark:border-zinc-800 hover:shadow-sm transition"
+            className="cursor-pointer p-4 rounded-xl border flex  justify-between bg-white dark:bg-zinc-900 dark:border-zinc-800 hover:shadow-sm transition"
+            title={`Open ${project.name}`}
           >
-            <h2 className="font-medium">{project.name}</h2>
+            <div>
+              <h2 className="font-medium">{project.name}</h2>
 
-            <p className="text-xs text-zinc-400">{project.readable_id}</p>
+              <p className="text-xs text-zinc-400">{project.readable_id}</p>
 
-            <p className="text-sm text-zinc-500 mt-2">{project.description}</p>
+              <p className="text-sm text-zinc-500 mt-2">{project.description}</p>
+            </div>
+            <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
           </div>
         ))}
       </div>

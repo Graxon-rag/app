@@ -5,12 +5,10 @@ import { axiosClient } from "@/utils/axiosClient";
 interface OrgStore {
   orgs: OrgInterface[];
   isLoading: boolean;
-
   getAllOrgs: () => Promise<OrgInterface[]>;
   getOrg: (id: string) => Promise<OrgInterface | null>;
   createOrg: (org: OrgCreateInterface) => Promise<boolean>;
   deleteOrg: (id: string) => Promise<boolean>;
-
   isModalOpen: boolean;
   openModal: () => void;
   closeModal: () => void;
@@ -28,7 +26,6 @@ export const useOrgStore = create<OrgStore>((set, get) => ({
     try {
       const response = await axiosClient.get(`/api/orgs/get/all`);
       const orgs = response.data?.data?.data ?? [];
-
       set({ orgs });
       return orgs;
     } catch (error) {
@@ -40,6 +37,10 @@ export const useOrgStore = create<OrgStore>((set, get) => ({
   },
 
   getOrg: async (id: string) => {
+    // Check local store state first to minimize redundant API calls
+    const existing = get().orgs.find((o) => o.id === id);
+    if (existing) return existing;
+
     try {
       const response = await axiosClient.get(`/api/orgs/get/${id}`);
       return response.data?.data ?? null;
@@ -49,28 +50,21 @@ export const useOrgStore = create<OrgStore>((set, get) => ({
     }
   },
 
-  createOrg: async (org: OrgCreateInterface) => {
+  createOrg: async (org) => {
     try {
-      const response = await axiosClient.post(`/api/orgs/create`, org);
-      const newOrg = response.data?.data;
-
-      if (newOrg) {
-        get().getAllOrgs();
-        return true;
-      }
-
-      return false;
+      await axiosClient.post(`/api/orgs/create`, org);
+      get().getAllOrgs(); // Refresh state list
+      return true;
     } catch (error) {
       console.error(error);
       return false;
     }
   },
 
-  deleteOrg: async (id: string) => {
+  deleteOrg: async (id) => {
     try {
       await axiosClient.delete(`/api/orgs/delete/${id}`);
-
-      get().getAllOrgs();
+      get().getAllOrgs(); // Refresh state list
       return true;
     } catch (error) {
       console.error(error);

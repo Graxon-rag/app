@@ -98,12 +98,21 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                     className="z-50 min-w-[160px] rounded-lg border bg-white dark:bg-zinc-900 dark:border-zinc-800 shadow-md p-1"
                   >
                     {/* PROCESS */}
+
                     {doc.status === "PENDING" && (
                       <DropdownMenu.Item
                         onClick={() => handleProcess(doc)}
                         className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
                       >
                         Process
+                      </DropdownMenu.Item>
+                    )}
+                    {doc.status === "FAILED" && (
+                      <DropdownMenu.Item
+                        onClick={() => handleProcess(doc)}
+                        className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      >
+                        Process Again
                       </DropdownMenu.Item>
                     )}
 
@@ -120,7 +129,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                       onClick={() => handleObjectView(doc)}
                       className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
                     >
-                      Open in Object Store
+                      Open in minIO
                     </DropdownMenu.Item>
 
                     <DropdownMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />
