@@ -1,7 +1,7 @@
-import DocumentQueryIndex from "@/components/document/Query";
+import QueryDocument from "@/components/document/Query";
 
 function DocumentQuery() {
-  return <DocumentQueryIndex />;
+  return <QueryDocument />;
 }
 
 export default DocumentQuery;

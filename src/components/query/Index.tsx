@@ -1,0 +1,697 @@
+import React, { useState } from "react";
+import { useParams } from "react-router-dom";
+import {
+  Send,
+  Loader2,
+  FileText,
+  Hash,
+  Layers,
+  HelpCircle,
+  ChevronDown,
+  ChevronUp,
+  ArrowLeft,
+  ArrowRight,
+  GitBranch,
+  Search,
+  BarChart2,
+  Zap,
+  Tag,
+  AlignLeft,
+  SlidersHorizontal,
+  FlaskConical,
+} from "lucide-react";
+import { useQueryStore } from "@/store/queryStore";
+import {
+  QueryType,
+  QueryDepth,
+  QueryResponse,
+  QueryMetadataInterface,
+  QueryLexicalEngineAnalysisInterface,
+} from "@/interfaces/QueryInterface";
+
+// ─── Collapsible ─────────────────────────────────────────────────────────────
+function Collapsible({
+  label,
+  icon,
+  defaultOpen = false,
+  badge,
+  children,
+  headerClassName = "",
+}: {
+  label: string;
+  icon?: React.ReactNode;
+  defaultOpen?: boolean;
+  badge?: string | number;
+  children: React.ReactNode;
+  headerClassName?: string;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        className={`w-full flex items-center justify-between px-3 py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors
+          bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800/70
+          text-zinc-500 dark:text-zinc-400 ${headerClassName}`}
+      >
+        <span className="flex items-center gap-1.5">
+          {icon}
+          {label}
+          {badge !== undefined && (
+            <span className="ml-1 bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none">
+              {badge}
+            </span>
+          )}
+        </span>
+        {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+      </button>
+      {open && <div className="p-3 bg-white dark:bg-zinc-950">{children}</div>}
+    </div>
+  );
+}
+
+// Adjacent Chunk (Prev / Next) — individually collapsible
+function AdjacentChunkPanel({
+  label,
+  icon,
+  accentColor,
+  chunk,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  accentColor: string;
+  chunk: { chunk_id: string; text: string; chunk_number: number; weight: number };
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        className="w-full flex items-center justify-between px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition text-xs"
+      >
+        <span className={`flex items-center gap-1.5 font-semibold ${accentColor}`}>
+          {icon}
+          {label}
+          <span className="font-mono text-zinc-400 dark:text-zinc-500 font-normal">
+            — Chunk {chunk.chunk_number}
+          </span>
+        </span>
+        <span className="flex items-center gap-2 text-zinc-400">
+          {open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+        </span>
+      </button>
+      {open && (
+        <div className="p-3 bg-white dark:bg-zinc-950 space-y-2">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-zinc-400 font-mono border-b border-zinc-100 dark:border-zinc-800 pb-2">
+            <span>
+              ID:{" "}
+              <span className="text-zinc-600 dark:text-zinc-300 break-all">{chunk.chunk_id}</span>
+            </span>
+            <span>
+              Weight:{" "}
+              <strong className="text-zinc-700 dark:text-zinc-200">
+                {chunk.weight.toFixed(4)}
+              </strong>
+            </span>
+          </div>
+          <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-300 whitespace-pre-wrap">
+            {chunk.text}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Vector Similar Chunk Item — individually collapsible
+function VecSimilarChunkItem({
+  vc,
+  index,
+}: {
+  vc: { chunk_id: string; text: string; chunk_number: number; weight: number };
+  index: number;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-lg border border-zinc-100 dark:border-zinc-800 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        className="w-full flex items-center justify-between px-3 py-2 bg-zinc-50/80 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition text-xs"
+      >
+        <span className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
+          <span className="bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 rounded px-1.5 py-0.5 text-[10px] font-bold">
+            {index + 1}
+          </span>
+          <span className="font-semibold">Chunk {vc.chunk_number}</span>
+          <span className="font-mono text-[10px] text-zinc-400 dark:text-zinc-500 hidden sm:inline">
+            {vc.chunk_id}
+          </span>
+        </span>
+        <span className="flex items-center gap-2">
+          <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded font-semibold text-[10px]">
+            w {vc.weight.toFixed(4)}
+          </span>
+          {open ? (
+            <ChevronUp size={12} className="text-zinc-400" />
+          ) : (
+            <ChevronDown size={12} className="text-zinc-400" />
+          )}
+        </span>
+      </button>
+      {open && (
+        <div className="p-3 bg-white dark:bg-zinc-950 space-y-2">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-zinc-400 font-mono border-b border-zinc-100 dark:border-zinc-800 pb-2">
+            <span>
+              ID: <span className="text-zinc-600 dark:text-zinc-300 break-all">{vc.chunk_id}</span>
+            </span>
+            <span>
+              Chunk: <strong className="text-zinc-700 dark:text-zinc-200">{vc.chunk_number}</strong>
+            </span>
+            <span>
+              Weight:{" "}
+              <strong className="text-zinc-700 dark:text-zinc-200">{vc.weight.toFixed(4)}</strong>
+            </span>
+          </div>
+          <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-300 whitespace-pre-wrap">
+            {vc.text}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Chunk Card
+function ChunkCard({ chunk, index }: { chunk: QueryMetadataInterface; index: number }) {
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
+  const hasPrev = !!chunk.prev_chunk;
+  const hasNext = !!chunk.next_chunk;
+  const hasVecSim = !!chunk.vector_similar_chunks?.length;
+  const hasExtra = hasPrev || hasNext || hasVecSim;
+
+  return (
+    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-2 px-4 py-3 bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-100 dark:border-zinc-800">
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <div className="flex items-center gap-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+            <Hash size={13} className="text-zinc-400 flex-shrink-0" />
+            Chunk {chunk.chunk_number}
+          </div>
+          <span className="font-mono text-[11px] text-zinc-400 dark:text-zinc-500 break-all">
+            {chunk.chunk_id}
+          </span>
+        </div>
+        <div className="flex items-center gap-3 text-xs text-zinc-500 flex-shrink-0">
+          <span>
+            Weight{" "}
+            <strong className="text-zinc-800 dark:text-zinc-200">{chunk.weight.toFixed(4)}</strong>
+          </span>
+          <span>
+            Score{" "}
+            <strong className="text-zinc-800 dark:text-zinc-200">
+              {chunk.point_score.toFixed(4)}
+            </strong>
+          </span>
+          {hasExtra && (
+            <button
+              type="button"
+              onClick={() => setDetailsOpen((p) => !p)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-600 dark:text-zinc-300 transition text-[11px] font-semibold"
+            >
+              {detailsOpen ? (
+                <>
+                  <ChevronUp size={11} /> Collapse
+                </>
+              ) : (
+                <>
+                  <ChevronDown size={11} />
+                  Details
+                  {hasVecSim && (
+                    <span className="ml-0.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full px-1.5 text-[9px] font-bold">
+                      {chunk.vector_similar_chunks!.length} sim
+                    </span>
+                  )}
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Main text — full, larger font */}
+      <div className="px-4 py-4">
+        <p className="text-base leading-relaxed text-zinc-700 dark:text-zinc-200 whitespace-pre-wrap bg-zinc-50/60 dark:bg-zinc-950/40 p-3 rounded-lg border border-dashed border-zinc-200 dark:border-zinc-700/60">
+          {chunk.text}
+        </p>
+      </div>
+
+      {/* Expanded section */}
+      {detailsOpen && hasExtra && (
+        <div className="px-4 pb-4 space-y-2.5">
+          {hasPrev && chunk.prev_chunk && (
+            <AdjacentChunkPanel
+              label="Previous Chunk"
+              icon={<ArrowLeft size={12} />}
+              accentColor="text-amber-500 dark:text-amber-400"
+              chunk={chunk.prev_chunk}
+            />
+          )}
+          {hasNext && chunk.next_chunk && (
+            <AdjacentChunkPanel
+              label="Next Chunk"
+              icon={<ArrowRight size={12} />}
+              accentColor="text-sky-500 dark:text-sky-400"
+              chunk={chunk.next_chunk}
+            />
+          )}
+          {hasVecSim && (
+            <Collapsible
+              label="Vector Similar Chunks"
+              icon={<GitBranch size={12} />}
+              badge={chunk.vector_similar_chunks!.length}
+              defaultOpen
+            >
+              <div className="space-y-2">
+                {chunk.vector_similar_chunks!.map((vc, vi) => (
+                  <VecSimilarChunkItem key={vc.chunk_id} vc={vc} index={vi} />
+                ))}
+              </div>
+            </Collapsible>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Lexical Analysis Panel
+function LexicalAnalysisPanel({ analysis }: { analysis: QueryLexicalEngineAnalysisInterface }) {
+  return (
+    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+      <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/60 flex items-center gap-2">
+        <FlaskConical size={13} className="text-violet-500" />
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+          Lexical Analysis
+        </h3>
+      </div>
+
+      <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+        {/* Raw query */}
+        <div className="px-4 py-3 space-y-1">
+          <p className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400">
+            Raw Query
+          </p>
+          <p className="text-sm text-zinc-700 dark:text-zinc-200 font-medium">
+            {analysis.raw_query}
+          </p>
+        </div>
+
+        {/* Tokens */}
+        {analysis.tokens.length > 0 && (
+          <div className="px-4 py-3 space-y-1.5">
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 flex items-center gap-1">
+              <AlignLeft size={10} /> Tokens
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {analysis.tokens.map((t, i) => (
+                <span
+                  key={i}
+                  className="font-mono text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 px-2 py-0.5 rounded"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Entities */}
+        {analysis.entities.length > 0 && (
+          <div className="px-4 py-3 space-y-1.5">
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 flex items-center gap-1">
+              <Tag size={10} /> Entities
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {analysis.entities.map((e, i) => (
+                <span
+                  key={i}
+                  className="flex items-center gap-1 text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 px-2 py-0.5 rounded-full"
+                >
+                  <span className="font-medium">{e.text}</span>
+                  <span className="text-[9px] bg-violet-200 dark:bg-violet-800 text-violet-700 dark:text-violet-200 rounded px-1 font-bold uppercase">
+                    {e.label}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Noun chunks */}
+        {analysis.noun_chunks.length > 0 && (
+          <div className="px-4 py-3 space-y-1.5">
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400">
+              Noun Chunks
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {analysis.noun_chunks.map((nc, i) => (
+                <span
+                  key={i}
+                  className="text-xs bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded"
+                >
+                  {nc}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Query flags */}
+        <div className="px-4 py-3 space-y-1.5">
+          <p className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400">
+            Query Flags
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {(
+              [
+                ["Acronym", analysis.is_acronym_query],
+                ["Single Token", analysis.is_single_token],
+                ["Multi Word", analysis.is_multi_word],
+              ] as [string, boolean][]
+            ).map(([label, val]) => (
+              <span
+                key={label}
+                className={`text-[11px] px-2 py-0.5 rounded font-semibold border ${
+                  val
+                    ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800"
+                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 border-zinc-200 dark:border-zinc-700"
+                }`}
+              >
+                {label}: {val ? "Yes" : "No"}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Lane priority */}
+        {analysis.lane_priority.length > 0 && (
+          <div className="px-4 py-3 space-y-2">
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 flex items-center gap-1">
+              <SlidersHorizontal size={10} /> Lane Priority
+            </p>
+            {(() => {
+              const maxP = Math.max(...analysis.lane_priority.map(([, v]) => v));
+              return analysis.lane_priority.map(([lane, priority]) => (
+                <div key={lane} className="space-y-0.5">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-mono text-zinc-500 dark:text-zinc-400">{lane}</span>
+                    <span className="font-semibold text-zinc-700 dark:text-zinc-300 tabular-nums">
+                      {priority.toFixed(1)}
+                    </span>
+                  </div>
+                  <div className="h-1 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-violet-400 to-violet-600 dark:from-violet-500 dark:to-violet-400"
+                      style={{ width: `${maxP > 0 ? (priority / maxP) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+              ));
+            })()}
+          </div>
+        )}
+
+        {/* Normalized queries */}
+        {Object.keys(analysis.normalized_query_for_lane).length > 0 && (
+          <div className="px-3 py-3">
+            <Collapsible label="Normalized Queries per Lane" icon={<Search size={10} />}>
+              <div className="space-y-2">
+                {Object.entries(analysis.normalized_query_for_lane).map(([lane, q]) => (
+                  <div
+                    key={lane}
+                    className="rounded-lg border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-2.5 space-y-0.5"
+                  >
+                    <span className="font-mono text-[10px] font-bold text-zinc-400 uppercase">
+                      {lane}
+                    </span>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-300">{q}</p>
+                  </div>
+                ))}
+              </div>
+            </Collapsible>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface QueryIndexProps {
+  doc_id?: string | null;
+}
+// Main Component
+function QueryIndex({ doc_id: propDocId }: QueryIndexProps) {
+  const { org_id, project_id } = useParams<{
+    org_id: string;
+    project_id: string;
+  }>();
+
+  const doc_id = propDocId || null;
+  const { query, isLoading } = useQueryStore();
+
+  const [inputQuery, setInputQuery] = useState("");
+  const [response, setResponse] = useState<QueryResponse | null>(null);
+  const [queryType, setQueryType] = useState<QueryType>(QueryType.SMART);
+  const [queryDepth, setQueryDepth] = useState<QueryDepth>(QueryDepth.STANDARD);
+  const [topK, setTopK] = useState<number>(5);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputQuery.trim() || !org_id || !project_id) return;
+    const data = await query({
+      org_id,
+      project_id,
+      query: inputQuery,
+      document_id: doc_id,
+      top_k: topK,
+      query_type: queryType,
+      query_depth: queryDepth,
+    });
+    if (data) setResponse(data as QueryResponse);
+  };
+
+  const isExpert = queryType === QueryType.EXPERT;
+  const hasLexicalChunks = !!response?.lexical_engine_chunk_ids?.length;
+  const hasLexicalAnalysis = !!response?.lexical_engine_analysis;
+
+  return (
+    <div className="space-y-6 max-w-[1450px] mx-auto p-4 md:p-6 text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
+      {/* ── Header ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-5 gap-4">
+        <div>
+          <h1 className="text-xl font-semibold flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+            Document Query Engine
+          </h1>
+          {doc_id && (
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+              Querying Doc ID:{" "}
+              <span className="font-mono bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
+                {doc_id}
+              </span>
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400">
+              Type
+            </label>
+            <select
+              value={queryType}
+              onChange={(e) => setQueryType(e.target.value as QueryType)}
+              className="px-3 py-1.5 text-sm rounded-lg border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            >
+              <option value={QueryType.QUICK}>Quick</option>
+              <option value={QueryType.SMART}>Smart</option>
+              <option value={QueryType.EXPERT}>Expert</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400">
+              Depth
+            </label>
+            <select
+              value={queryDepth}
+              onChange={(e) => setQueryDepth(e.target.value as QueryDepth)}
+              className="px-3 py-1.5 text-sm rounded-lg border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            >
+              <option value={QueryDepth.STANDARD}>Standard</option>
+              <option value={QueryDepth.ADVANCED}>Advanced</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400">
+              Top K
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={20}
+              value={topK}
+              onChange={(e) => setTopK(Number(e.target.value))}
+              className="w-20 px-3 py-1.5 text-sm rounded-lg border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:outline-none"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Expert mode banner */}
+      {isExpert && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 text-xs text-violet-700 dark:text-violet-300">
+          <FlaskConical size={13} />
+          <strong>Expert mode</strong> — Lexical engine analysis will be included in results.
+        </div>
+      )}
+
+      {/* ── Search bar ── */}
+      <form onSubmit={handleSearch} className="relative">
+        <input
+          type="text"
+          placeholder="Ask a question about this document…"
+          value={inputQuery}
+          onChange={(e) => setInputQuery(e.target.value)}
+          disabled={isLoading}
+          className="w-full pl-4 pr-12 py-3.5 rounded-xl border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 placeholder-zinc-400 dark:placeholder-zinc-500 transition"
+        />
+        <button
+          type="submit"
+          disabled={isLoading || !inputQuery.trim()}
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 disabled:opacity-40 hover:opacity-90 transition"
+        >
+          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+        </button>
+      </form>
+
+      {/* ── Response ── */}
+      {response && (
+        <div className="grid lg:grid-cols-3 gap-6 items-start">
+          {/* LEFT/CENTER */}
+          <div className="lg:col-span-2 space-y-5">
+            {/* Answer */}
+            <div className="p-5 rounded-xl border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-sm space-y-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                <HelpCircle size={14} /> Answer Engine
+              </h3>
+              <p className="text-base leading-relaxed whitespace-pre-line text-zinc-800 dark:text-zinc-200">
+                {response.answer}
+              </p>
+            </div>
+
+            {/* Grounded sources */}
+            {response.metadata && response.metadata.length > 0 && (
+              <div className="space-y-3 mt-10">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <h3 className="text-sm font-medium text-zinc-600 dark:text-zinc-400 flex items-center gap-2">
+                    <Layers size={15} />
+                    Grounded Sources
+                    <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-full px-2 py-0.5 text-xs font-bold">
+                      {response.metadata.length}
+                    </span>
+                  </h3>
+                  <p className="text-[15px] text-zinc-400 border-emerald-400 rounded-md border p-2">
+                    Click <strong>Details</strong> on any chunk to expand prev / next / similar
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  {response.metadata.map((chunk, index) => (
+                    <ChunkCard key={chunk.chunk_id || index} chunk={chunk} index={index} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT: Lexical panels */}
+          <div className="space-y-4">
+            {/* Lexical analysis (expert) */}
+            {hasLexicalAnalysis && (
+              <LexicalAnalysisPanel analysis={response.lexical_engine_analysis!} />
+            )}
+
+            {/* Lexical chunk scores */}
+            {hasLexicalChunks && (
+              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+                <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/60 flex items-center gap-2">
+                  <Search size={13} className="text-zinc-400" />
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    Lexical Chunk Scores
+                  </h3>
+                  <span className="ml-auto bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 rounded-full px-1.5 py-0.5 text-[10px] font-bold">
+                    {response.lexical_engine_chunk_ids!.length}
+                  </span>
+                </div>
+
+                <div className="divide-y divide-zinc-100 dark:divide-zinc-800/80">
+                  {response.lexical_engine_chunk_ids!.map((lex, index) => {
+                    const maxScore = Math.max(
+                      ...response.lexical_engine_chunk_ids!.map((l) => l.score),
+                    );
+                    const pct = maxScore > 0 ? (lex.score / maxScore) * 100 : 0;
+                    return (
+                      <div key={index} className="px-4 py-3 space-y-1.5">
+                        <div className="flex items-start justify-between gap-2 text-xs">
+                          <span className="font-mono text-zinc-500 dark:text-zinc-400 break-all text-[11px] leading-relaxed">
+                            {lex.chunk_id}
+                          </span>
+                          <span className="flex-shrink-0 font-semibold text-zinc-700 dark:text-zinc-300 tabular-nums">
+                            {lex.score.toFixed(4)}
+                          </span>
+                        </div>
+                        <div className="h-1 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-blue-400 to-blue-600 dark:from-blue-500 dark:to-blue-400 transition-all duration-500"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800/40 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2 text-[10px] text-zinc-400">
+                  <BarChart2 size={11} />
+                  Avg score:{" "}
+                  <strong className="text-zinc-600 dark:text-zinc-300">
+                    {(
+                      response.lexical_engine_chunk_ids!.reduce((a, l) => a + l.score, 0) /
+                      response.lexical_engine_chunk_ids!.length
+                    ).toFixed(4)}
+                  </strong>
+                </div>
+              </div>
+            )}
+
+            {/* No lexical — non-expert hint */}
+            {!hasLexicalChunks && !hasLexicalAnalysis && response && !isExpert && (
+              <div className="rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/40 p-6 text-center space-y-2">
+                <Zap size={20} className="mx-auto text-zinc-300 dark:text-zinc-700" />
+                <p className="text-xs text-zinc-400">
+                  Lexical engine data is only available in <strong>Expert</strong> mode.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default QueryIndex;
