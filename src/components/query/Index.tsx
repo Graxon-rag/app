@@ -564,7 +564,7 @@ function QueryIndex({ doc_id: propDocId }: QueryIndexProps) {
       <form onSubmit={handleSearch} className="relative">
         <input
           type="text"
-          placeholder="Ask a question about this document…"
+          placeholder="Ask a question...."
           value={inputQuery}
           onChange={(e) => setInputQuery(e.target.value)}
           disabled={isLoading}

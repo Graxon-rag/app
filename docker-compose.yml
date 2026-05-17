@@ -1,0 +1,10 @@
+services:
+  graxon-app:
+    container_name: graxon_app
+    image: graxon/graxon-app:latest
+    ports:
+      - "5995:80"
+    environment:
+      - VITE_SERVER_URL=http://localhost:8888
+      - VITE_MINIO_URL=http://localhost:9001
+    restart: always
