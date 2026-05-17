@@ -24,6 +24,10 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
     window.open(url, "_blank");
   };
 
+  const handleQueryDocument = (documentId: string) => {
+    const url = `/organizations/${orgId}/projects/${projectId}/docs/${documentId}/query`;
+    window.open(url, "_blank");
+  };
   const handleDelete = async (doc: DocumentInterface) => {
     if (!confirm("Delete this document?")) return;
     await deleteDocument(orgId, projectId, doc.id);
@@ -84,7 +88,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
 
               <td className="p-3">{new Date(doc.created_at).toLocaleString()}</td>
 
-              {/* ✅ ACTION MENU */}
+              {/* ACTION MENU */}
               <td className="p-3 text-right">
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild>
@@ -123,6 +127,16 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                     >
                       View
                     </DropdownMenu.Item>
+
+                    {/* Query */}
+                    {doc.status === "PROCESSED" && (
+                      <DropdownMenu.Item
+                        onClick={() => handleQueryDocument(doc.id)}
+                        className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      >
+                        Query
+                      </DropdownMenu.Item>
+                    )}
 
                     {/* OBJECT STORE */}
                     <DropdownMenu.Item

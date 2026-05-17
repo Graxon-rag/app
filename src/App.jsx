@@ -15,6 +15,7 @@ const EmbeddingModels = lazy(() => import("@/pages/org/EmbeddingModels"));
 const ModelCredential = lazy(() => import("@/pages/org/ModelCredential"));
 const CreateProject = lazy(() => import("@/pages/org/CreateProject"));
 const ProjectDetail = lazy(() => import("@/pages/org/ProjectDetail"));
+const DocumentQuery = lazy(() => import("@/pages/org/DocumentQuery"));
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
               <Route path="projects" element={<Projects />} />
               <Route path="projects/create" element={<CreateProject />} />
               <Route path="projects/:project_id" element={<ProjectDetail />} />
+              <Route path="projects/:project_id/docs/:doc_id/query" element={<DocumentQuery />} />
               <Route path="sparse-models" element={<SparseModels />} />
               <Route path="rerankers" element={<Rerankers />} />
               <Route path="llm-models" element={<LLMModels />} />
