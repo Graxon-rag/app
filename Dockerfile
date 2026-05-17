@@ -26,7 +26,7 @@ RUN rm -rf ./*
 COPY --from=builder /graxon/app/dist .
 
 # Copy a custom nginx configuration if you have one (Optional but recommended for SPA routing)
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
