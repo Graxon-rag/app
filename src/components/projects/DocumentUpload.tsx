@@ -101,6 +101,7 @@ function DocumentUpload({ orgId, projectId }: { orgId: string; projectId: string
         currentUploadId,
         currentKey,
         file.name,
+        file.size,
         localCompletedParts, // use local copy, not store read
       );
 

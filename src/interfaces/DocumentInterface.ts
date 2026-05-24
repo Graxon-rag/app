@@ -21,6 +21,7 @@ export interface DocumentInterface {
   type: string;
   bucket: string;
   key: string;
+  size?: number;
   status: string;
   created_at: string;
   updated_at: string;

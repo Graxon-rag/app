@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { MoreVertical } from "lucide-react";
+import { Check, Copy, MoreVertical } from "lucide-react";
 import { useDocumentStore } from "@/store/documentStore";
 import { DocumentInterface } from "@/interfaces/DocumentInterface";
 
@@ -11,6 +11,8 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
   useEffect(() => {
     getAllDocuments(orgId, projectId);
   }, [orgId, projectId]);
+
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const handleView = async (doc: DocumentInterface) => {
     const url = await getPresignedUrl(orgId, projectId, doc.bucket, doc.key);
@@ -58,35 +60,75 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
         return "bg-zinc-500 text-white";
     }
   };
+  const formatBytes = (bytes?: number) => {
+    if (bytes === undefined || bytes === null) return "Null";
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
+
+  const handleCopyId = (id: string) => {
+    navigator.clipboard.writeText(id);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 1000); // Reset after 1 seconds
+  };
 
   return (
     <div className="rounded-xl mb-10 border bg-white dark:bg-zinc-900 dark:border-zinc-800 overflow-hidden">
-      <table className="w-full text-sm">
+      <table className="w-full text-sm whitespace-nowrap">
         <thead className="bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
           <tr>
+            <th className="text-left p-3">ID</th>
             <th className="text-left p-3">Name</th>
             <th className="text-left p-3">Type</th>
+            <th className="text-left p-3">Size</th>
             <th className="text-left p-3">Status</th>
-            <th className="text-left p-3">Created</th>
+            <th className="text-left p-3">Created At</th>
+            <th className="text-left p-3">Updated At</th>
             <th className="text-right p-3">Actions</th>
           </tr>
         </thead>
 
         <tbody>
-          {documents.map((doc) => (
-            <tr key={doc.id} className="border-t dark:border-zinc-800">
-              <td className="p-3">{doc.name}</td>
-              <td className="p-3">{doc.type}</td>
-
-              <td className="p-3">
-                <td className="p-3">
-                  <span className={`text-xs px-2 py-1 rounded ${getStatusStyles(doc.status)}`}>
-                    {doc.status}
-                  </span>
-                </td>
+          {documents.map((doc: DocumentInterface) => (
+            <tr
+              key={doc.id}
+              className="border-t dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+            >
+              {/* ID Column with Copy Feature */}
+              <td className="p-3 font-mono text-xs">
+                <button
+                  onClick={() => handleCopyId(doc.id)}
+                  className="flex items-center gap-1.5 px-2 py-1 -ml-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                  title="Copy full ID"
+                >
+                  {doc.id.substring(0, 8)}...
+                  {copiedId === doc.id ? (
+                    <span className="flex items-center text-green-500 dark:text-green-400">
+                      <Check size={14} />
+                    </span>
+                  ) : (
+                    <Copy size={14} />
+                  )}
+                </button>
               </td>
 
-              <td className="p-3">{new Date(doc.created_at).toLocaleString()}</td>
+              <td className="p-3" title={doc.name}>
+                {doc.name.length > 20 ? `${doc.name.slice(0, 20)}...` : doc.name}
+              </td>
+              <td className="p-3">{doc.type}</td>
+              <td className="p-3 text-zinc-500">{formatBytes(doc.size)}</td>
+
+              <td className="p-3">
+                <span className={`text-xs px-2 py-1 rounded ${getStatusStyles(doc.status)}`}>
+                  {doc.status}
+                </span>
+              </td>
+
+              <td className="p-3 text-zinc-500">{new Date(doc.created_at).toLocaleString()}</td>
+              <td className="p-3 text-zinc-500">{new Date(doc.updated_at).toLocaleString()}</td>
 
               {/* ACTION MENU */}
               <td className="p-3 text-right">
@@ -98,15 +140,14 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                   </DropdownMenu.Trigger>
 
                   <DropdownMenu.Content
-                    align="start"
+                    align="end"
                     className="z-50 min-w-[160px] rounded-lg border bg-white dark:bg-zinc-900 dark:border-zinc-800 shadow-md p-1"
                   >
                     {/* PROCESS */}
-
                     {doc.status === "PENDING" && (
                       <DropdownMenu.Item
                         onClick={() => handleProcess(doc)}
-                        className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none"
                       >
                         Process
                       </DropdownMenu.Item>
@@ -114,7 +155,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                     {doc.status === "FAILED" && (
                       <DropdownMenu.Item
                         onClick={() => handleProcess(doc)}
-                        className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none"
                       >
                         Process Again
                       </DropdownMenu.Item>
@@ -123,7 +164,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                     {/* VIEW */}
                     <DropdownMenu.Item
                       onClick={() => handleView(doc)}
-                      className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none"
                     >
                       View
                     </DropdownMenu.Item>
@@ -132,7 +173,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                     {doc.status === "PROCESSED" && (
                       <DropdownMenu.Item
                         onClick={() => handleQueryDocument(doc.id)}
-                        className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none"
                       >
                         Query
                       </DropdownMenu.Item>
@@ -141,7 +182,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                     {/* OBJECT STORE */}
                     <DropdownMenu.Item
                       onClick={() => handleObjectView(doc)}
-                      className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none"
                     >
                       Open in minIO
                     </DropdownMenu.Item>
@@ -151,7 +192,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                     {/* DELETE */}
                     <DropdownMenu.Item
                       onClick={() => handleDelete(doc)}
-                      className="px-3 py-2 text-left text-sm rounded-md cursor-pointer text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
+                      className="px-3 py-2 text-left text-sm rounded-md cursor-pointer text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 outline-none"
                     >
                       Delete
                     </DropdownMenu.Item>
@@ -163,7 +204,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
 
           {documents.length === 0 && (
             <tr>
-              <td colSpan={5} className="text-center p-6 text-zinc-500">
+              <td colSpan={8} className="text-center p-6 text-zinc-500">
                 No documents found
               </td>
             </tr>

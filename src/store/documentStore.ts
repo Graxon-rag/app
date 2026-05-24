@@ -45,6 +45,7 @@ interface DocumentStore {
     uploadId: string,
     key: string,
     fileName: string,
+    fileSize: number | null,
     parts: { etag: string; part_number: number }[],
   ) => Promise<boolean>;
 }
@@ -168,13 +169,23 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
     }
   },
 
-  completeMultipartUpload: async (orgId, projectId, documentId, uploadId, key, fileName, parts) => {
+  completeMultipartUpload: async (
+    orgId,
+    projectId,
+    documentId,
+    uploadId,
+    key,
+    fileName,
+    fileSize,
+    parts,
+  ) => {
     try {
       const url = `/api/documents/${orgId}/projects/${projectId}/upload/multipart/${documentId}/complete`;
       const response = await axiosClient.post(url, {
         upload_id: uploadId,
         key,
         file_name: fileName,
+        size: fileSize,
         parts,
       });
       return !!response.data?.data;
