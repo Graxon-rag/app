@@ -5,7 +5,12 @@ import { axiosClient } from "@/utils/axiosClient";
 interface DocumentStore {
   documents: DocumentInterface[];
   getAllDocuments: (orgId: string, projectId: string) => Promise<void>;
-  uploadDocument: (orgId: string, projectId: string, file: File) => Promise<void>;
+  uploadDocument: (
+    orgId: string,
+    projectId: string,
+    documentId: string,
+    file: File,
+  ) => Promise<void>;
   getDocument: (orgId: string, projectId: string, id: string) => Promise<DocumentInterface | null>;
   deleteDocument: (
     orgId: string,
@@ -42,9 +47,9 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
 
     return response.data?.data ?? null;
   },
-  uploadDocument: async (orgId: string, projectId: string, file: File) => {
+  uploadDocument: async (orgId: string, projectId: string, documentId: string, file: File) => {
     try {
-      const url = `/api/documents/${orgId}/projects/${projectId}/upload`;
+      const url = `/api/documents/${orgId}/projects/${projectId}/upload/${documentId}`;
 
       const formData = new FormData();
       formData.append("file", file);
@@ -105,6 +110,62 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
       return data;
     } catch (error) {
       console.log(error);
+    }
+  },
+  initMultipartUpload: async (
+    orgId: string,
+    projectId: string,
+    documentId: string,
+    fileName: string,
+  ) => {
+    try {
+      const url = `/api/documents/${orgId}/projects/${projectId}/upload/multipart/${documentId}/init/${fileName}`;
+      const response = await axiosClient.post(url);
+      const data = response.data?.data ?? null;
+      if (!data) return null;
+      return { uploadId: data.upload_id, key: data.key };
+    } catch (error) {
+      console.error("Failed to initiate multipart upload", error);
+      return null;
+    }
+  },
+
+  getPresignedPartUrl: async (
+    orgId: string,
+    projectId: string,
+    documentId: string,
+    uploadId: string,
+    key: string,
+    partNumber: number,
+  ) => {
+    try {
+      const encodedKey = encodeURIComponent(key);
+      const url = `/api/documents/${orgId}/projects/${projectId}/upload/multipart/${documentId}/presigned-url/${encodedKey}/${uploadId}/part/${partNumber}`;
+      const response = await axiosClient.get(url);
+      return response.data?.data?.url ?? null;
+    } catch (error) {
+      console.error("Failed to get presigned part URL", error);
+      return null;
+    }
+  },
+
+  completeMultipartUpload: async (
+    orgId: string,
+    projectId: string,
+    documentId: string,
+    uploadId: string,
+    key: string,
+    fileName: string,
+    parts: any,
+  ) => {
+    try {
+      const encodedKey = encodeURIComponent(key);
+      const url = `/api/documents/${orgId}/projects/${projectId}/upload/multipart/${documentId}/complete/${encodedKey}/${uploadId}/${fileName}`;
+      const response = await axiosClient.post(url, parts);
+      return !!response.data?.data;
+    } catch (error) {
+      console.error("Failed to complete multipart upload", error);
+      return false;
     }
   },
 }));

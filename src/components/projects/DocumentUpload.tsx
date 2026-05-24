@@ -7,6 +7,7 @@ const ALLOWED_EXTENSIONS = [".txt", ".pdf", ".md"];
 function DocumentUpload({ orgId, projectId }: { orgId: string; projectId: string }) {
   const { uploadDocument, getAllDocuments } = useDocumentStore();
 
+  const [documentId] = useState(() => crypto.randomUUID());
   const [loading, setLoading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +27,7 @@ function DocumentUpload({ orgId, projectId }: { orgId: string; projectId: string
 
     try {
       setLoading(true);
-      await uploadDocument(orgId, projectId, file);
+      await uploadDocument(orgId, projectId, documentId, file);
       await getAllDocuments(orgId, projectId);
     } finally {
       setLoading(false);
