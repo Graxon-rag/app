@@ -1,16 +1,22 @@
 import React, { useState, useCallback } from "react";
 import { UploadCloud } from "lucide-react";
+import axios from "axios";
 import { useDocumentStore } from "@/store/documentStore";
+import { useMultipartUploadStore } from "@/store/multipartStore";
 
 const ALLOWED_EXTENSIONS = [".txt", ".pdf", ".md"];
+const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB per chunk
 
 function DocumentUpload({ orgId, projectId }: { orgId: string; projectId: string }) {
-  const { uploadDocument, getAllDocuments } = useDocumentStore();
+  const { getAllDocuments, initMultipartUpload, getPresignedPartUrl, completeMultipartUpload } =
+    useDocumentStore();
 
-  const [documentId] = useState(() => crypto.randomUUID());
+  const { getSession, setSession, addPart, deleteSession } = useMultipartUploadStore();
+
   const [loading, setLoading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
 
   const isValidFile = (file: File) => {
     const name = file.name.toLowerCase();
@@ -19,6 +25,7 @@ function DocumentUpload({ orgId, projectId }: { orgId: string; projectId: string
 
   const handleFile = async (file: File) => {
     setError(null);
+    setProgress(0);
 
     if (!isValidFile(file)) {
       setError("Only .txt, .pdf, .md files are allowed");
@@ -27,8 +34,87 @@ function DocumentUpload({ orgId, projectId }: { orgId: string; projectId: string
 
     try {
       setLoading(true);
-      await uploadDocument(orgId, projectId, documentId, file);
+
+      const session = getSession(file.name);
+      const currentDocumentId = session?.documentId ?? crypto.randomUUID();
+      let currentUploadId = session?.uploadId ?? null;
+      let currentKey = session?.key ?? null;
+      // Track locally to avoid stale reads
+      const localCompletedParts: { etag: string; part_number: number }[] = session?.completedParts
+        ? [...session.completedParts]
+        : [];
+
+      if (!currentUploadId || !currentKey) {
+        const result = await initMultipartUpload(orgId, projectId, currentDocumentId, file.name);
+        if (!result) {
+          setError("Failed to initiate upload");
+          return;
+        }
+        currentUploadId = result.uploadId;
+        currentKey = result.key;
+        setSession(file.name, currentDocumentId, currentUploadId, currentKey);
+      }
+
+      const totalParts = Math.ceil(file.size / CHUNK_SIZE);
+
+      for (let i = 1; i <= totalParts; i++) {
+        const alreadyUploaded = localCompletedParts.find((p) => p.part_number === i);
+        if (alreadyUploaded) {
+          setProgress(Math.round((i / totalParts) * 100));
+          continue;
+        }
+
+        const start = (i - 1) * CHUNK_SIZE;
+        const end = Math.min(start + CHUNK_SIZE, file.size);
+        const chunk = file.slice(start, end);
+
+        const presignedUrl = await getPresignedPartUrl(
+          orgId,
+          projectId,
+          currentDocumentId,
+          currentUploadId,
+          currentKey,
+          i,
+        );
+
+        if (!presignedUrl) {
+          setError(`Failed to get upload URL for part ${i}`);
+          return;
+        }
+
+        const uploadRes = await axios.put(presignedUrl, chunk, {
+          headers: { "Content-Type": file.type },
+        });
+
+        const etag = uploadRes.headers.etag;
+        const part = { etag, part_number: i };
+        localCompletedParts.push(part);
+        addPart(file.name, part); // still persist to store
+
+        setProgress(Math.round((i / totalParts) * 100));
+      }
+
+      const success = await completeMultipartUpload(
+        orgId,
+        projectId,
+        currentDocumentId,
+        currentUploadId,
+        currentKey,
+        file.name,
+        localCompletedParts, // use local copy, not store read
+      );
+
+      if (!success) {
+        setError("Failed to complete upload");
+        return;
+      }
+
+      deleteSession(file.name);
+      setProgress(100);
       await getAllDocuments(orgId, projectId);
+    } catch (err) {
+      console.error(err);
+      setError("Upload failed. You can retry to resume.");
     } finally {
       setLoading(false);
     }
@@ -42,7 +128,6 @@ function DocumentUpload({ orgId, projectId }: { orgId: string; projectId: string
   const handleDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragActive(false);
-
     if (e.dataTransfer.files?.length) {
       await handleFile(e.dataTransfer.files[0]);
     }
@@ -80,13 +165,33 @@ function DocumentUpload({ orgId, projectId }: { orgId: string; projectId: string
           accept=".txt,.pdf,.md"
           onChange={handleChange}
           className="absolute inset-0 opacity-0 cursor-pointer"
+          disabled={loading}
         />
 
-        {/* ERROR */}
-        {error && <p className="text-xs mt-3 text-red-500">{error}</p>}
+        {/* PROGRESS */}
+        {loading && progress > 0 && (
+          <div className="mt-4 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-1.5">
+            <div
+              className="bg-primary-500 h-1.5 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        )}
 
-        {/* LOADING */}
-        {loading && <p className="text-xs mt-3 text-zinc-500 animate-pulse">Uploading...</p>}
+        {/* LOADING TEXT */}
+        {loading && (
+          <p className="text-xs mt-2 text-zinc-500 animate-pulse">Uploading... {progress}%</p>
+        )}
+
+        {/* RESUME HINT */}
+        {!loading && error && (
+          <p className="text-xs mt-2 text-orange-500">
+            Upload interrupted. Select the same file to resume.
+          </p>
+        )}
+
+        {/* ERROR */}
+        {error && <p className="text-xs mt-1 text-red-500">{error}</p>}
       </div>
     </div>
   );

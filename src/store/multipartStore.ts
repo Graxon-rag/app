@@ -1,22 +1,12 @@
+import { UploadPart, UploadSession } from "@/interfaces/MultipartInterface";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-
-interface UploadPart {
-  etag: string;
-  part_number: number;
-}
-
-interface UploadSession {
-  uploadId: string;
-  key: string;
-  completedParts: UploadPart[];
-}
 
 interface MultipartUploadStore {
   // filename -> UploadSession
   sessions: Record<string, UploadSession>;
   getSession: (filename: string) => UploadSession | null;
-  setSession: (filename: string, uploadId: string, key: string) => void;
+  setSession: (filename: string, documentId: string, uploadId: string, key: string) => void;
   addPart: (filename: string, part: UploadPart) => void;
   deleteSession: (filename: string) => void;
 }
@@ -30,12 +20,13 @@ export const useMultipartUploadStore = create<MultipartUploadStore>()(
         return get().sessions[filename] ?? null;
       },
 
-      setSession: (filename, uploadId, key) => {
+      setSession: (filename, documentId, uploadId, key) => {
         set((state) => ({
           sessions: {
             ...state.sessions,
             [filename]: {
               uploadId,
+              documentId,
               key,
               completedParts: state.sessions[filename]?.completedParts ?? [],
             },
