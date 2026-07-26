@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
-import { useAudioModelStore } from "@/store/audioModelStore";
+import { useVideoModelStore } from "@/store/videoModelStore";
 
 interface Props {
   open: boolean;
@@ -8,9 +8,9 @@ interface Props {
   provider: string;
 }
 
-export default function CreateAudioModelModal({ open, onClose, provider }: Props) {
+export default function CreateVideoModelModal({ open, onClose, provider }: Props) {
   const { org_id } = useParams();
-  const { createAudioModel } = useAudioModelStore();
+  const { createVideoModel } = useVideoModelStore();
   const [metadataError, setMetadataError] = useState("");
 
   const [form, setForm] = useState({
@@ -42,7 +42,7 @@ export default function CreateAudioModelModal({ open, onClose, provider }: Props
       return;
     }
 
-    await createAudioModel(org_id, {
+    await createVideoModel(org_id, {
       org_id,
       provider,
       name: form.name,
@@ -67,7 +67,7 @@ export default function CreateAudioModelModal({ open, onClose, provider }: Props
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
       <div className="w-full max-w-lg bg-zinc-950 border border-zinc-800 rounded-xl p-5 space-y-4">
-        <h2 className="text-lg font-semibold text-white">Create Audio/STT Model</h2>
+        <h2 className="text-lg font-semibold text-white">Create Video Model</h2>
 
         <input
           name="name"

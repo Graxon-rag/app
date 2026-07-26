@@ -12,6 +12,7 @@ import {
   Github,
   Mic,
   Shield,
+  Video,
 } from "lucide-react";
 
 import ThemeToggle from "@/components/ui/ThemeToggle";
@@ -62,6 +63,11 @@ const orgLinks = (orgId: string): SidebarLinkProps[] => [
     to: `/organizations/${orgId}/audio-models`,
     label: "Audio/STT Model",
     icon: Mic,
+  },
+  {
+    to: `/organizations/${orgId}/video-models`,
+    label: "Video Model",
+    icon: Video,
   },
   {
     to: `/organizations/${orgId}/model-credential`,

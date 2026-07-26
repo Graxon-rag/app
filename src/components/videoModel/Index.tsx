@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Mic, Sparkles } from "lucide-react";
+import { Plus, Trash2, Video, Sparkles } from "lucide-react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { useAudioModelStore } from "@/store/audioModelStore";
+import { useVideoModelStore } from "@/store/videoModelStore";
 import { useModelProviderStore } from "@/store/modelProviderStore";
-import CreateAudioModelModal from "@/components/audioModel/CreateAudioModelModal";
-import { AudioModelInterface } from "@/interfaces/AudioModelInterface";
+import CreateVideoModelModal from "@/components/videoModel/CreateVideoModelModal";
+import { VideoModelInterface } from "@/interfaces/VideoModelInterface";
 
-function AudioModelIndex() {
+function VideoModelIndex() {
   const { org_id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const provider = searchParams.get("provider") || "deepgram";
+  const provider = searchParams.get("provider") || "twelvelabs";
 
-  const { getAudioModelProviders } = useModelProviderStore();
-  const { audioModels, getAllProviderAudioModels, deleteAudioModel } = useAudioModelStore();
+  const { getVideoModelProviders } = useModelProviderStore();
+  const { videoModels, getAllProviderVideoModels, deleteVideoModel } = useVideoModelStore();
 
   const [providers, setProviders] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
@@ -22,7 +22,7 @@ function AudioModelIndex() {
 
   useEffect(() => {
     const loadProviders = async () => {
-      const data = await getAudioModelProviders();
+      const data = await getVideoModelProviders();
       setProviders(data || []);
     };
     loadProviders();
@@ -30,7 +30,7 @@ function AudioModelIndex() {
 
   useEffect(() => {
     if (org_id && provider) {
-      getAllProviderAudioModels(org_id, provider);
+      getAllProviderVideoModels(org_id, provider);
     }
   }, [org_id, provider]);
 
@@ -44,17 +44,17 @@ function AudioModelIndex() {
       setDoubleConfirm(id);
       return;
     }
-    await deleteAudioModel(org_id, provider, id);
+    await deleteVideoModel(org_id, provider, id);
     setConfirmDelete(null);
     setDoubleConfirm(null);
   };
 
-  const isEmpty = !audioModels || audioModels.length === 0;
+  const isEmpty = !videoModels || videoModels.length === 0;
 
   return (
     <div className="space-y-6 max-w-[1450px] mx-auto">
       {/* HEADER */}
-      <h1 className="text-xl font-semibold">Audio/STT Models</h1>
+      <h1 className="text-xl font-semibold">Video Models</h1>
 
       <div className="flex items-center justify-between">
         {/* Provider Select */}
@@ -85,14 +85,14 @@ function AudioModelIndex() {
       {isEmpty ? (
         <div className="flex flex-col items-center justify-center py-24 px-6 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50 text-center">
           <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-50 dark:bg-primary-900/30 mb-5">
-            <Mic className="w-8 h-8 text-primary-500" />
+            <Video className="w-8 h-8 text-primary-500" />
           </div>
 
           <h2 className="text-base font-semibold text-zinc-800 dark:text-zinc-100 mb-1">
             No models for this provider yet
           </h2>
           <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xs mb-6">
-            Be the first to add an Audio/STT model under{" "}
+            Be the first to add an Video model under{" "}
             <span className="font-medium text-zinc-700 dark:text-zinc-300">{provider}</span>.
             Configure it once and use it across your pipelines.
           </p>
@@ -109,7 +109,7 @@ function AudioModelIndex() {
       ) : (
         /* GRID */
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {audioModels.map((model: AudioModelInterface) => (
+          {videoModels.map((model: VideoModelInterface) => (
             <div
               key={model.id}
               className="p-4 rounded-xl border bg-white dark:bg-zinc-900 dark:border-zinc-800 space-y-3"
@@ -157,9 +157,9 @@ function AudioModelIndex() {
       )}
 
       {/* MODAL */}
-      <CreateAudioModelModal open={open} onClose={() => setOpen(false)} provider={provider} />
+      <CreateVideoModelModal open={open} onClose={() => setOpen(false)} provider={provider} />
     </div>
   );
 }
 
-export default AudioModelIndex;
+export default VideoModelIndex;

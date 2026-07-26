@@ -11,9 +11,7 @@
 // "updated_at": "2026-07-26T10:54:15.225636Z"
 // }
 
-export interface AudioModelMetadataInterface {
-  [key: string]: any;
-}
+export type AudioModelMetadataInterface = Record<string, unknown>;
 
 export interface AudioModelInterface {
   id: string;
