@@ -10,6 +10,7 @@ import {
   Layers,
   Hexagon,
   Github,
+  Mic,
   Shield,
 } from "lucide-react";
 
@@ -56,6 +57,11 @@ const orgLinks = (orgId: string): SidebarLinkProps[] => [
     to: `/organizations/${orgId}/embedding-models`,
     label: "Embedding Model",
     icon: Layers,
+  },
+  {
+    to: `/organizations/${orgId}/audio-models`,
+    label: "Audio/STT Model",
+    icon: Mic,
   },
   {
     to: `/organizations/${orgId}/model-credential`,

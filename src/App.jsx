@@ -11,6 +11,7 @@ const Projects = lazy(() => import("@/pages/org/Projects"));
 const SparseModels = lazy(() => import("@/pages/org/SparseModels"));
 const Rerankers = lazy(() => import("@/pages/org/Rerankers"));
 const LLMModels = lazy(() => import("@/pages/org/LLMModels"));
+const AudioModels = lazy(() => import("@/pages/org/AudioModels"));
 const EmbeddingModels = lazy(() => import("@/pages/org/EmbeddingModels"));
 const ModelCredential = lazy(() => import("@/pages/org/ModelCredential"));
 const CreateProject = lazy(() => import("@/pages/org/CreateProject"));
@@ -34,6 +35,7 @@ export default function App() {
               <Route path="sparse-models" element={<SparseModels />} />
               <Route path="rerankers" element={<Rerankers />} />
               <Route path="llm-models" element={<LLMModels />} />
+              <Route path="audio-models" element={<AudioModels />} />
               <Route path="embedding-models" element={<EmbeddingModels />} />
               <Route path="model-credential" element={<ModelCredential />} />
             </Route>
