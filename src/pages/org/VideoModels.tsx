@@ -1,5 +1,5 @@
 import VideoModelIndex from "@/components/videoModel/Index";
 
-export default function AudioModels() {
+export default function VideoModels() {
   return <VideoModelIndex />;
 }

@@ -13,6 +13,7 @@ const Rerankers = lazy(() => import("@/pages/org/Rerankers"));
 const LLMModels = lazy(() => import("@/pages/org/LLMModels"));
 const AudioModels = lazy(() => import("@/pages/org/AudioModels"));
 const VideoModels = lazy(() => import("@/pages/org/VideoModels"));
+const OCRModels = lazy(() => import("@/pages/org/OCRModels"));
 const EmbeddingModels = lazy(() => import("@/pages/org/EmbeddingModels"));
 const ModelCredential = lazy(() => import("@/pages/org/ModelCredential"));
 const CreateProject = lazy(() => import("@/pages/org/CreateProject"));
@@ -37,6 +38,7 @@ export default function App() {
               <Route path="rerankers" element={<Rerankers />} />
               <Route path="llm-models" element={<LLMModels />} />
               <Route path="audio-models" element={<AudioModels />} />
+              <Route path="ocr-models" element={<OCRModels />} />
               <Route path="video-models" element={<VideoModels />} />
               <Route path="embedding-models" element={<EmbeddingModels />} />
               <Route path="model-credential" element={<ModelCredential />} />

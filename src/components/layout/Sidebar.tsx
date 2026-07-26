@@ -13,6 +13,7 @@ import {
   Mic,
   Shield,
   Video,
+  Image,
 } from "lucide-react";
 
 import ThemeToggle from "@/components/ui/ThemeToggle";
@@ -58,6 +59,11 @@ const orgLinks = (orgId: string): SidebarLinkProps[] => [
     to: `/organizations/${orgId}/embedding-models`,
     label: "Embedding Model",
     icon: Layers,
+  },
+  {
+    to: `/organizations/${orgId}/ocr-models`,
+    label: "OCR Model",
+    icon: Image,
   },
   {
     to: `/organizations/${orgId}/audio-models`,
