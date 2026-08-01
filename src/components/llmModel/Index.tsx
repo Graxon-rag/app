@@ -117,7 +117,7 @@ function LLMModelIndex() {
               <div className="flex justify-between">
                 <div>
                   <h2 className="font-medium">{model.name}</h2>
-                  <p className="text-xs text-zinc-400">{model.model_id}</p>
+                  <p className="text-xs font-mono mt-1">ID: {model.model_id}</p>
                 </div>
 
                 <button onClick={() => setConfirmDelete(model.id)} className="text-red-500">

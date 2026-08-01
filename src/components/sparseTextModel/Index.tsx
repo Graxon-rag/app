@@ -1,99 +1,131 @@
-import React, { useEffect, useState } from "react";
-import * as Dialog from "@radix-ui/react-dialog";
-import { useParams } from "react-router-dom";
-import { Plus, Trash2, Loader2, BrainCircuit, Sparkles } from "lucide-react";
-
+import { useEffect, useState } from "react";
+import { Plus, Trash2, Hash, Sparkles } from "lucide-react";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useSparseTextModelStore } from "@/store/sparseTextModelStore";
-import type { CreateSparseTextModelInterface } from "@/interfaces/SparseTextModelInterface";
+import CreateSparseTextModelModal from "@/components/sparseTextModel/CreateSparseTextModelModal";
+import { useModelProviderStore } from "@/store/modelProviderStore";
+
+import {
+  SparseTextModelInterface,
+  SparseModelProviderTypeInterface,
+} from "@/interfaces/SparseTextModelInterface";
 
 function SparseTextModelIndex() {
-  const { org_id } = useParams<{ org_id: string }>();
+  const { org_id } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const { sparseTextModels, getAllSparseTextModels, createSparseTextModel, deleteSparseTextModel } =
+  const providerType =
+    (searchParams.get("provider_type") as SparseModelProviderTypeInterface) ||
+    SparseModelProviderTypeInterface.LOCAL;
+  const provider = searchParams.get("provider") || "qdrant";
+
+  const { sparseTextModels, getAllSparseTextModels, deleteSparseTextModel } =
     useSparseTextModelStore();
+  const { getSparseModelProviders } = useModelProviderStore();
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [providers, setProviders] = useState<string[]>([]);
+  const [open, setOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-
-  const [form, setForm] = useState<CreateSparseTextModelInterface>({
-    org_id: org_id || "",
-    name: "",
-    provider: "",
-    model: "",
-    description: "",
-    size_in_gb: 0,
-  });
+  const [doubleConfirm, setDoubleConfirm] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!org_id) return;
-    const load = async () => {
-      setIsLoading(true);
-      await getAllSparseTextModels(org_id);
-      setIsLoading(false);
+    const loadProviders = async () => {
+      if (getSparseModelProviders) {
+        const data = await getSparseModelProviders();
+        setProviders(data || ["qdrant", "pinecone", "prithivida"]);
+      }
     };
-    load();
-  }, [org_id]);
+    loadProviders();
+  }, [getSparseModelProviders]);
 
-  const handleCreate = async () => {
+  useEffect(() => {
+    if (org_id) {
+      getAllSparseTextModels(org_id);
+    }
+  }, [org_id, getAllSparseTextModels]);
+
+  const handleProviderTypeChange = (value: string) => {
+    setSearchParams({ provider_type: value, provider });
+  };
+
+  const handleProviderChange = (value: string) => {
+    setSearchParams({ provider_type: providerType, provider: value });
+  };
+
+  const handleDelete = async (id: string) => {
     if (!org_id) return;
-    setSubmitting(true);
-    await createSparseTextModel(org_id, form);
-    setForm({ org_id, name: "", provider: "", model: "", description: "", size_in_gb: 0 });
-    setIsModalOpen(false);
-    setSubmitting(false);
-  };
-
-  const handleDelete = async () => {
-    if (!org_id || !confirmDeleteId) return;
-    await deleteSparseTextModel(org_id, confirmDeleteId);
+    if (doubleConfirm !== id) {
+      setDoubleConfirm(id);
+      return;
+    }
+    await deleteSparseTextModel(org_id, id);
     setConfirmDeleteId(null);
+    setDoubleConfirm(null);
   };
 
-  if (!org_id) return null;
+  const filteredModels = sparseTextModels?.filter(
+    (model) =>
+      model.provider_type === providerType &&
+      model.provider.toLowerCase() === provider.toLowerCase(),
+  );
 
-  const isEmpty = !isLoading && (!sparseTextModels || sparseTextModels.length === 0);
+  const isEmpty = !filteredModels || filteredModels.length === 0;
 
   return (
     <div className="space-y-6 max-w-[1450px] mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Sparse Text Models</h1>
+      {/* Header & Controls */}
+      <h1 className="text-xl font-semibold">Sparse Text Models</h1>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between  gap-4">
+        <div className="flex items-center gap-3 w-full  sm:w-auto">
+          {/* Provider Type Selector */}
+          <select
+            value={providerType}
+            onChange={(e) => handleProviderTypeChange(e.target.value)}
+            className="h-9 px-3 rounded-lg border bg-white dark:bg-zinc-900 dark:border-zinc-800 text-sm"
+          >
+            <option value={SparseModelProviderTypeInterface.LOCAL}>Local</option>
+            <option value={SparseModelProviderTypeInterface.CLOUD}>Cloud</option>
+          </select>
 
+          {/* Provider Selector */}
+          <select
+            value={provider}
+            onChange={(e) => handleProviderChange(e.target.value)}
+            className="h-9 px-3 rounded-lg border bg-white dark:bg-zinc-900 dark:border-zinc-800 text-sm"
+          >
+            {providers.map((p) => (
+              <option key={p} value={p}>
+                {p.charAt(0).toUpperCase() + p.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
+        {/* Create Button */}
         <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700"
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50"
         >
-          <Plus size={16} />
+          <Plus size={14} />
           Add Model
         </button>
       </div>
 
-      {/* Loading */}
-      {isLoading ? (
-        <div className="flex items-center gap-2 text-zinc-500">
-          <Loader2 className="animate-spin" size={16} />
-          Loading models...
-        </div>
-      ) : isEmpty ? (
-        /* Empty State */
+      {/* Empty State */}
+      {isEmpty ? (
         <div className="flex flex-col items-center justify-center py-24 px-6 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50 text-center">
           <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-50 dark:bg-primary-900/30 mb-5">
-            <BrainCircuit className="w-8 h-8 text-primary-500" />
+            <Hash className="w-8 h-8 text-primary-500" />
           </div>
 
           <h2 className="text-base font-semibold text-zinc-800 dark:text-zinc-100 mb-1">
-            No sparse text models yet
+            No sparse text models for {provider} ({providerType}) yet
           </h2>
           <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xs mb-6">
-            Be the first to add a sparse text model. Connect a provider, define your model, and
-            start building.
+            Be the first to add a sparse embedding model (like BM25) for keyword-based retrieval.
           </p>
 
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => setOpen(true)}
             className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 transition"
           >
             <Sparkles size={14} />
@@ -103,117 +135,88 @@ function SparseTextModelIndex() {
       ) : (
         /* Grid */
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sparseTextModels?.map((m) => (
+          {filteredModels.map((model: SparseTextModelInterface) => (
             <div
-              key={m.id}
-              className="p-4 rounded-xl border bg-white dark:bg-zinc-900 dark:border-zinc-800 space-y-3"
+              key={model.id}
+              className="p-4 rounded-xl border bg-white dark:bg-zinc-900 dark:border-zinc-800 space-y-3 flex flex-col justify-between"
             >
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <h2 className="font-medium">{m.name}</h2>
-                  <p className="text-xs text-zinc-400 font-mono">ID: {m.id}</p>
+              <div className="space-y-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h2 className="font-medium ">{model.name}</h2>
+                    <p className="text-xs font-mono mt-1">ID: {model.model_id}</p>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setConfirmDeleteId(model.id);
+                      setDoubleConfirm(null);
+                    }}
+                    className="text-red-500 hover:text-red-600 transition-colors"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
 
-                <button
-                  onClick={() => setConfirmDeleteId(m.id)}
-                  className="text-red-500 hover:text-red-600"
-                >
-                  <Trash2 size={16} />
-                </button>
+                <div className="space-y-1 text-sm text-zinc-500 dark:text-zinc-400">
+                  <p>
+                    <b>Provider Type:</b>{" "}
+                    <span className="uppercase text-xs px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">
+                      {model.provider_type}
+                    </span>
+                  </p>
+                  <p>
+                    <b>Provider:</b> {model.provider}
+                  </p>
+                  <p>
+                    <b>Model Name:</b> {model.model_name}
+                  </p>
+                  {model.size_in_gb !== null && model.size_in_gb !== undefined && (
+                    <p>
+                      <b>Size:</b> {model.size_in_gb} GB
+                    </p>
+                  )}
+                </div>
+
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2">
+                  {model.description}
+                </p>
+
+                {model.model_metadata && Object.keys(model.model_metadata).length > 0 && (
+                  <div className="text-xs text-zinc-500 bg-zinc-950 p-2.5 rounded-lg border border-zinc-800/60 overflow-x-auto">
+                    <span className="font-semibold block mb-1 text-zinc-400">Metadata:</span>
+                    <pre className="whitespace-pre-wrap font-mono text-zinc-400">
+                      {JSON.stringify(model.model_metadata, null, 2)}
+                    </pre>
+                  </div>
+                )}
               </div>
 
-              <div className="text-xs text-zinc-400 space-y-1">
-                <p>Provider: {m.provider}</p>
-                <p>Model: {m.model}</p>
-                <p>Size: {m.size_in_gb} GB</p>
-              </div>
-              <p className="text-xs text-zinc-500">{m.description}</p>
+              {confirmDeleteId === model.id && (
+                <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800">
+                  <button
+                    onClick={() => {
+                      setConfirmDeleteId(null);
+                      setDoubleConfirm(null);
+                    }}
+                    className="text-xs text-zinc-400 hover:text-zinc-200 px-2 py-1"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleDelete(model.id)}
+                    className="text-xs bg-red-600/20 text-red-400 hover:bg-red-600/30 px-3 py-1 rounded-md transition-colors"
+                  >
+                    {doubleConfirm === model.id ? "Click to confirm" : "Delete"}
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
       )}
 
-      {/* CREATE MODAL */}
-      <Dialog.Root open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/40" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 w-[420px] -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-zinc-900 p-6 rounded-xl space-y-3 shadow-xl">
-            <Dialog.Title className="text-lg font-semibold">Add Sparse Model</Dialog.Title>
-
-            <input
-              placeholder="Name"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg dark:bg-zinc-800"
-            />
-            <input
-              placeholder="Provider"
-              value={form.provider}
-              onChange={(e) => setForm({ ...form, provider: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg dark:bg-zinc-800"
-            />
-            <input
-              placeholder="Model"
-              value={form.model}
-              onChange={(e) => setForm({ ...form, model: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg dark:bg-zinc-800"
-            />
-            <textarea
-              placeholder="Description"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg dark:bg-zinc-800"
-            />
-            <input
-              type="number"
-              placeholder="Size in GB"
-              value={form.size_in_gb}
-              onChange={(e) => setForm({ ...form, size_in_gb: Number(e.target.value) })}
-              className="w-full px-3 py-2 border rounded-lg dark:bg-zinc-800"
-            />
-
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="px-3 py-2 border rounded-lg hover:text-zinc-400"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreate}
-                disabled={submitting}
-                className="px-3 py-2 bg-primary-600 text-white rounded-lg disabled:opacity-60 hover:text-zinc-400"
-              >
-                {submitting ? "Creating..." : "Create"}
-              </button>
-            </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
-
-      {/* DELETE CONFIRM */}
-      <Dialog.Root open={!!confirmDeleteId} onOpenChange={() => setConfirmDeleteId(null)}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/40" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 w-[360px] -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-zinc-900 p-6 rounded-xl space-y-4">
-            <Dialog.Title className="text-lg font-semibold text-red-500">
-              Delete Model?
-            </Dialog.Title>
-            <p className="text-sm text-zinc-500">This action cannot be undone.</p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setConfirmDeleteId(null)}
-                className="px-3 py-2 border rounded-lg"
-              >
-                Cancel
-              </button>
-              <button onClick={handleDelete} className="px-3 py-2 bg-red-600 text-white rounded-lg">
-                Delete
-              </button>
-            </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+      <CreateSparseTextModelModal open={open} onClose={() => setOpen(false)} />
     </div>
   );
 }

@@ -9,6 +9,7 @@ interface ModelProviderInterface {
   ocrModelProviders: string[];
   videoModelProviders: string[];
   rerankerModelProviders: string[];
+  sparseModelProviders: string[];
   getAllModelProviders: () => Promise<
     string[] | ["openai", "gemini", "claude", "deepseek", "voyage"]
   >;
@@ -20,6 +21,7 @@ interface ModelProviderInterface {
   getOCRModelProviders: () => Promise<string[] | ["datalab", "mistral", "llamaparse"]>;
   getVideoModelProviders: () => Promise<string[] | ["twelvelabs", "gemini"]>;
   getRerankerModelProviders: () => Promise<string[] | ["cohere", "jina", "voyage", "baai"]>;
+  getSparseModelProviders: () => Promise<string[] | ["qdrant", "pinecone", "prithivida"]>;
 }
 
 export const useModelProviderStore = create<ModelProviderInterface>((set, get) => ({
@@ -30,6 +32,7 @@ export const useModelProviderStore = create<ModelProviderInterface>((set, get) =
   ocrModelProviders: [],
   videoModelProviders: [],
   rerankerModelProviders: [],
+  sparseModelProviders: [],
   getAllModelProviders: async () => {
     try {
       const response = await axiosClient.get(`/api/model-providers/all`);
@@ -88,6 +91,15 @@ export const useModelProviderStore = create<ModelProviderInterface>((set, get) =
     try {
       const response = await axiosClient.get(`/api/model-providers/reranker-model`);
       return response.data ?? ["cohere", "jina", "voyage", "baai"];
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  },
+  getSparseModelProviders: async () => {
+    try {
+      const response = await axiosClient.get(`/api/model-providers/sparse-model`);
+      return response.data ?? ["qdrant", "pinecone", "prithivida"];
     } catch (error) {
       console.error(error);
       return [];

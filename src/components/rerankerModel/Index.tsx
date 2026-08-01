@@ -70,9 +70,8 @@ function ReRankerModelIndex() {
   return (
     <div className="space-y-6 max-w-[1450px] mx-auto">
       {/* Header & Controls */}
+      <h1 className="text-xl font-semibold">Re-Ranker Models</h1>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold">Re-Ranker Models</h1>
-
         <div className="flex items-center gap-3 w-full sm:w-auto">
           {/* Provider Type Selector */}
           <select
@@ -96,16 +95,15 @@ function ReRankerModelIndex() {
               </option>
             ))}
           </select>
-
-          {/* Create Button */}
-          <button
-            onClick={() => setOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 ml-auto sm:ml-0 text-sm font-medium"
-          >
-            <Plus size={14} />
-            Add Model
-          </button>
         </div>
+        {/* Create Button */}
+        <button
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50"
+        >
+          <Plus size={14} />
+          Add Model
+        </button>
       </div>
 
       {/* Empty State */}
@@ -142,8 +140,8 @@ function ReRankerModelIndex() {
               <div className="space-y-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h2 className="font-medium text-zinc-100">{model.name}</h2>
-                    <p className="text-xs text-zinc-400 font-mono">ID: {model.model_id}</p>
+                    <h2 className="font-medium ">{model.name}</h2>
+                    <p className="text-xs font-mono mt-1">ID: {model.model_id}</p>
                   </div>
 
                   <button
