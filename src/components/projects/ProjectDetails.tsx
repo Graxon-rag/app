@@ -4,24 +4,35 @@ import { useProjectStore } from "@/store/projectStore";
 import DocumentUpload from "@/components/projects/DocumentUpload";
 import DocumentTable from "@/components/projects/DocumentTable";
 import QueryTab from "@/components/projects/QueryTab";
+import ConfigTab from "@/components/projects/ConfigTab";
+import WebhookTab from "@/components/projects/WebhookTab";
 
-type Section = "llm" | "embedding" | "sparse" | "reranker" | "llm_cred" | "embedding_cred" | null;
+type TabKey = "details" | "config" | "query" | "upload" | "documents" | "webhooks" | "danger-zone";
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: "details", label: "Details" },
+  { key: "query", label: "Query" },
+  { key: "upload", label: "Upload" },
+  { key: "documents", label: "Documents" },
+  { key: "config", label: "Config" },
+  { key: "webhooks", label: "Webhooks" },
+  { key: "danger-zone", label: "Danger Zone" },
+];
 
 function ProjectDetails() {
   const { org_id, project_id } = useParams();
 
   const { selectedProject, getProjectDetails, deleteProject } = useProjectStore();
 
-  const [active, setActive] = useState<Section>(null);
   const [confirmDelete, setConfirmDelete] = useState("");
   const [openDelete, setOpenDelete] = useState(false);
   const navigate = useNavigate();
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const tab = searchParams.get("tab") || "query";
+  const tab = (searchParams.get("tab") as TabKey) || "details";
 
-  const setTab = (value: string) => {
+  const setTab = (value: TabKey) => {
     setSearchParams({ tab: value });
   };
 
@@ -52,210 +63,91 @@ function ProjectDetails() {
 
   const p = selectedProject;
 
-  const toggle = (key: Section) => {
-    setActive(active === key ? null : key);
-  };
-
-  const cardClass = "p-4 rounded-xl border dark:border-zinc-800 cursor-pointer transition";
+  const InfoRow = ({ label, value }: { label: string; value?: React.ReactNode }) => (
+    <div className="flex items-center justify-between py-2.5 border-b last:border-b-0 dark:border-zinc-800">
+      <span className="text-sm text-zinc-500">{label}</span>
+      <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 font-mono">
+        {value || "—"}
+      </span>
+    </div>
+  );
 
   return (
     <div className="space-y-6 max-w-[1700px] mx-auto">
-      {/* HEADER */}
-      <div className="flex items-start justify-between gap-4">
-        {/* LEFT SIDE */}
-        <div className="space-y-1">
-          <h1 className="text-xl font-semibold">{p.name}</h1>
-
-          <p className="text-sm text-zinc-400">
-            <b>ID:</b> {p.id}
-          </p>
-
-          <p className="text-sm text-zinc-400">
-            <b>Readable ID:</b> {p.readable_id}
-          </p>
-
-          <p className="text-sm text-zinc-500">
-            <b>Description:</b> {p.description}
-          </p>
-        </div>
-
-        {/* RIGHT SIDE */}
-        <div className="flex-shrink-0">
-          <button
-            onClick={() => setOpenDelete(true)}
-            className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700"
-          >
-            Delete Project
-          </button>
-        </div>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-4">
-        {/* LLM */}
-        <div className={cardClass} onClick={() => toggle("llm")}>
-          <h2 className="font-medium">LLM Model</h2>
-          <p className="text-sm text-zinc-500">{p.details?.llm_model?.name}</p>
-
-          {active === "llm" && (
-            <div className="mt-3 text-xs text-zinc-400 space-y-1">
-              <p>
-                <b>ID:</b> {p.details?.llm_model?.id}
-              </p>
-              <p>
-                <b>Model:</b> {p.details?.llm_model?.model_id}
-              </p>
-              <p>
-                <b>Provider:</b> {p.details?.llm_model?.provider}
-              </p>
-              <p>{p.details?.llm_model?.description}</p>
-            </div>
-          )}
-        </div>
-
-        {/* EMBEDDING */}
-        <div className={cardClass} onClick={() => toggle("embedding")}>
-          <h2 className="font-medium">Embedding Model</h2>
-          <p className="text-sm text-zinc-500">{p.details?.embedding_model?.name}</p>
-
-          {active === "embedding" && (
-            <div className="mt-3 text-xs text-zinc-400 space-y-1">
-              <p>
-                <b>ID:</b> {p.details?.embedding_model?.id}
-              </p>
-              <p>
-                <b>Provider:</b> {p.details?.embedding_model?.provider}
-              </p>
-              <p>
-                <b>Model:</b> {p.details?.embedding_model?.model_id}
-              </p>
-              <p>
-                <b>Dimension:</b> {p.details?.embedding_model?.dimension}
-              </p>
-              <p>{p.details?.embedding_model?.description}</p>
-            </div>
-          )}
-        </div>
-
-        {/* SPARSE */}
-        <div className={cardClass} onClick={() => toggle("sparse")}>
-          <h2 className="font-medium">Sparse Model</h2>
-          <p className="text-sm text-zinc-500">{p.details?.sparse_text_model?.name}</p>
-
-          {active === "sparse" && (
-            <div className="mt-3 text-xs text-zinc-400 space-y-1">
-              <p>
-                <b>ID:</b> {p.details?.sparse_text_model?.id}
-              </p>
-              <p>
-                <b>Provider:</b> {p.details?.sparse_text_model?.provider}
-              </p>
-              <p>{p.details?.sparse_text_model?.description}</p>
-            </div>
-          )}
-        </div>
-
-        {/* RERANKER */}
-        <div className={cardClass} onClick={() => toggle("reranker")}>
-          <h2 className="font-medium">Reranker</h2>
-          <p className="text-sm text-zinc-500">{p.details?.reranker?.name}</p>
-
-          {active === "reranker" && (
-            <div className="mt-3 text-xs text-zinc-400 space-y-1">
-              <p>
-                <b>ID:</b> {p.details?.reranker?.id}
-              </p>
-              <p>
-                <b>Provider:</b> {p.details?.reranker?.provider}
-              </p>
-              <p>
-                <b>Model:</b> {p.details?.reranker?.model}
-              </p>
-              <p>{p.details?.reranker?.description}</p>
-            </div>
-          )}
-        </div>
-
-        {/* LLM CRED */}
-        <div className={cardClass} onClick={() => toggle("llm_cred")}>
-          <h2 className="font-medium">LLM Credential</h2>
-          <p className="text-sm text-zinc-500">{p.details?.llm_model_credential?.name}</p>
-
-          {active === "llm_cred" && (
-            <div className="mt-3 text-xs text-zinc-400 space-y-1">
-              <p>
-                <b>Provider:</b> {p.details?.llm_model_credential?.provider}
-              </p>
-              <p>
-                <b>API Key:</b> {p.details?.llm_model_credential?.api_key}
-              </p>
-              <p>{p.details?.llm_model_credential?.description}</p>
-            </div>
-          )}
-        </div>
-
-        {/* EMBED CRED */}
-        <div className={cardClass} onClick={() => toggle("embedding_cred")}>
-          <h2 className="font-medium">Embedding Credential</h2>
-          <p className="text-sm text-zinc-500">{p.details?.embedding_model_credential?.name}</p>
-
-          {active === "embedding_cred" && (
-            <div className="mt-3 text-xs text-zinc-400 space-y-1">
-              <p>
-                <b>Provider:</b> {p.details?.embedding_model_credential?.provider}
-              </p>
-              <p>
-                <b>API Key:</b> {p.details?.embedding_model_credential?.api_key}
-              </p>
-              <p>{p.details?.embedding_model_credential?.description}</p>
-            </div>
-          )}
-        </div>
-      </div>
-
+      {/* TABS */}
       <div className="space-y-4">
         <div className="flex gap-2 border-b dark:border-zinc-800">
-          <button
-            onClick={() => setTab("query")}
-            className={`px-4 py-2 ${
-              tab === "query" ? "border-b-2 border-primary-600 text-primary-600" : "text-zinc-500"
-            }`}
-          >
-            Query
-          </button>
-          <button
-            onClick={() => setTab("documents")}
-            className={`px-4 py-2 ${
-              tab === "documents"
-                ? "border-b-2 border-primary-600 text-primary-600"
-                : "text-zinc-500"
-            }`}
-          >
-            Documents
-          </button>
-
-          {/* future tabs */}
-          {/* <button onClick={() => setTab("settings")}>Settings</button> */}
+          {TABS.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`px-4 py-2 ${
+                tab === key ? "border-b-2 border-primary-600 text-primary-600" : "text-zinc-500"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
-        {tab === "query" && org_id && (
-          <>
-            {project_id && (
-              <>
-                <QueryTab />
-              </>
-            )}
-          </>
-        )}
-        {tab === "documents" && org_id && (
-          <>
-            {project_id && (
-              <div className="flex flex-col gap-6 my-6 mt-10">
-                <DocumentUpload orgId={org_id} projectId={project_id} />
+        {/* DETAILS TAB */}
+        {tab === "details" && (
+          <div className="space-y-6 max-w-2xl">
+            {/* TITLE */}
+            <div>
+              <h1 className="text-xl font-semibold">{p.name}</h1>
+              {p.description && <p className="text-sm text-zinc-500 mt-1">{p.description}</p>}
+            </div>
 
-                <DocumentTable orgId={org_id} projectId={project_id} />
+            {/* INFO CARD */}
+            <div className="rounded-xl border dark:border-zinc-800 px-4">
+              <InfoRow label="Project ID" value={p.id} />
+              <InfoRow label="Readable ID" value={p.readable_id} />
+            </div>
+          </div>
+        )}
+
+        {/* DANGER ZONE */}
+        {tab === "danger-zone" && (
+          <div className="rounded-xl border border-red-200 dark:border-red-900/50 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3">
+              <div>
+                <h2 className="text-sm font-medium text-red-600 dark:text-red-400">
+                  Delete this project
+                </h2>
+                <p className="text-xs text-zinc-500 mt-0.5">Once deleted, this cannot be undone.</p>
               </div>
-            )}
-          </>
+              <button
+                onClick={() => setOpenDelete(true)}
+                className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700 flex-shrink-0"
+              >
+                Delete Project
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* CONFIG TAB */}
+        {tab === "config" && <ConfigTab details={p.details} />}
+
+        {/* QUERY TAB */}
+        {tab === "query" && org_id && project_id && <QueryTab />}
+
+        {/* UPLOAD TAB */}
+        {tab === "upload" && org_id && project_id && (
+          <DocumentUpload orgId={org_id} projectId={project_id} />
+        )}
+
+        {/* DOCUMENTS TAB */}
+        {tab === "documents" && org_id && project_id && (
+          <div className="flex flex-col gap-6 my-6 mt-10">
+            <DocumentTable orgId={org_id} projectId={project_id} />
+          </div>
+        )}
+
+        {/* WEBHOOKS TAB */}
+        {tab === "webhooks" && org_id && project_id && (
+          <WebhookTab orgId={org_id} projectId={project_id} />
         )}
       </div>
 
