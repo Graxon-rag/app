@@ -81,7 +81,7 @@ function ProjectDetails() {
             <button
               key={key}
               onClick={() => setTab(key)}
-              className={`px-4 py-2 ${
+              className={`px-4 py-2 cursor-pointer ${
                 tab === key ? "border-b-2 border-primary-600 text-primary-600" : "text-zinc-500"
               }`}
             >

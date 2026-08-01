@@ -1,6 +1,66 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "DM Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --font-display: "Syne", sans-serif;
+
+  --color-primary-50: #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-200: #c7d2fe;
+  --color-primary-300: #a5b4fc;
+  --color-primary-400: #818cf8;
+  --color-primary-500: #6366f1;
+  --color-primary-600: #4f46e5;
+  --color-primary-700: #4338ca;
+  --color-primary-800: #3730a3;
+  --color-primary-900: #312e81;
+
+  --animate-fade-in: fadeIn 0.3s ease-out;
+  --animate-slide-in: slideIn 0.25s ease-out;
+
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes slideIn {
+    0% {
+      opacity: 0;
+      transform: translateX(-8px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+}
+
+/* @utility classes are registered as real utilities, so they can be
+   composed by other classes' @apply — plain @layer components classes
+   (below) can't be composed that way in v4. */
+@utility badge {
+  @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium;
+}
+
+@utility badge-active {
+  @apply badge bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400;
+}
+
+@utility badge-inactive {
+  @apply badge bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500;
+}
+
+@utility badge-beta {
+  @apply badge bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400;
+}
 
 @layer base {
   :root {
@@ -47,22 +107,6 @@
     @apply bg-white dark:bg-zinc-900
            border border-zinc-200 dark:border-zinc-800
            rounded-xl shadow-sm;
-  }
-
-  .badge {
-    @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium;
-  }
-
-  .badge-active {
-    @apply badge bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400;
-  }
-
-  .badge-inactive {
-    @apply badge bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500;
-  }
-
-  .badge-beta {
-    @apply badge bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400;
   }
 
   .page-title {

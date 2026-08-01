@@ -10,6 +10,7 @@ import {
   isOcrCandidate,
   DocumentCategory,
 } from "@/libs/documentTypes";
+import mime from "mime-types";
 
 const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB per chunk
 

@@ -1,4 +1,5 @@
-import { Hexagon, GitBranch, Zap, ShieldCheck, Network, Github } from "lucide-react";
+import { Hexagon, GitBranch, Zap, ShieldCheck, Network } from "lucide-react";
+import { SiGithub } from "@icons-pack/react-simple-icons";
 import { Link } from "react-router-dom";
 import logo from "@/assets/img/Graxon-wbg.png";
 
@@ -76,7 +77,7 @@ export default function Home() {
                border border-border bg-background text-sm font-medium text-foreground
                transition-colors hover:bg-accent hover:text-accent-foreground"
             >
-              <Github className="h-4 w-4" />
+              <SiGithub className="h-4 w-4" />
               GitHub
             </a>
           </div>

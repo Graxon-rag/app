@@ -9,12 +9,12 @@ import {
   Cpu,
   Layers,
   Hexagon,
-  Github,
   Mic,
   Shield,
   Video,
   Image,
 } from "lucide-react";
+import { SiGithub } from "@icons-pack/react-simple-icons";
 
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { mockOrganizations } from "@/data/mockData";
@@ -158,7 +158,7 @@ export default function Sidebar() {
         <div className="px-3 py-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
           <div className="flex gap-3 items-center">
             <a href="https://github.com/Graxon-rag/graxon" target="_blank">
-              <Github className="h-4 w-4" />
+              <SiGithub className="h-4 w-4" />
             </a>
           </div>
           <ThemeToggle />

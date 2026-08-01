@@ -15,8 +15,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const handleView = async (doc: DocumentInterface) => {
-    const url = await getPresignedUrl(orgId, projectId, doc.bucket, doc.key);
-    // console.log("URL", url);
+    const url = `/organizations/${orgId}/projects/${projectId}/docs/${doc.id}/view`;
 
     if (url) window.open(url, "_blank");
   };
@@ -101,7 +100,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
               <td className="p-3 font-mono text-xs">
                 <button
                   onClick={() => handleCopyId(doc.id)}
-                  className="flex items-center gap-1.5 px-2 py-1 -ml-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                  className="flex items-center gap-1.5 px-2 py-1 -ml-2 cursor-pointer rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
                   title="Copy full ID"
                 >
                   {doc.id.substring(0, 8)}...
@@ -134,7 +133,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
               <td className="p-3 text-right">
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild>
-                    <button className="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                    <button className="p-2 rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800">
                       <MoreVertical size={16} />
                     </button>
                   </DropdownMenu.Trigger>
