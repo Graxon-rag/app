@@ -8,6 +8,7 @@ interface ModelProviderInterface {
   audioModelProviders: string[];
   ocrModelProviders: string[];
   videoModelProviders: string[];
+  rerankerModelProviders: string[];
   getAllModelProviders: () => Promise<
     string[] | ["openai", "gemini", "claude", "deepseek", "voyage"]
   >;
@@ -18,6 +19,7 @@ interface ModelProviderInterface {
   >;
   getOCRModelProviders: () => Promise<string[] | ["datalab", "mistral", "llamaparse"]>;
   getVideoModelProviders: () => Promise<string[] | ["twelvelabs", "gemini"]>;
+  getRerankerModelProviders: () => Promise<string[] | ["cohere", "jina", "voyage", "baai"]>;
 }
 
 export const useModelProviderStore = create<ModelProviderInterface>((set, get) => ({
@@ -27,6 +29,7 @@ export const useModelProviderStore = create<ModelProviderInterface>((set, get) =
   audioModelProviders: [],
   ocrModelProviders: [],
   videoModelProviders: [],
+  rerankerModelProviders: [],
   getAllModelProviders: async () => {
     try {
       const response = await axiosClient.get(`/api/model-providers/all`);
@@ -76,6 +79,15 @@ export const useModelProviderStore = create<ModelProviderInterface>((set, get) =
     try {
       const response = await axiosClient.get(`/api/model-providers/video-model`);
       return response.data ?? ["twelvelabs", "gemini"];
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  },
+  getRerankerModelProviders: async () => {
+    try {
+      const response = await axiosClient.get(`/api/model-providers/reranker-model`);
+      return response.data ?? ["cohere", "jina", "voyage", "baai"];
     } catch (error) {
       console.error(error);
       return [];
