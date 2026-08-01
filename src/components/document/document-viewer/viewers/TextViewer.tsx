@@ -28,7 +28,7 @@ export function TextViewer({ url, fileName }: ViewerProps) {
   return (
     <div className="flex flex-col overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800">
       <Toolbar url={url} fileName={fileName} />
-      <div className="max-h-[32rem] overflow-auto bg-white dark:bg-neutral-950">
+      <div className="max-h-184 overflow-auto bg-white dark:bg-neutral-950">
         {error && <ErrorState message="Couldn't load this file." url={url} fileName={fileName} />}
         {!error && text === null && <LoadingState label="Loading text…" />}
         {!error && text !== null && (

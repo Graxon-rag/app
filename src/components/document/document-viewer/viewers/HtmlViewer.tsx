@@ -37,7 +37,7 @@ export function HtmlViewer({ url, fileName }: ViewerProps) {
             title={`${fileName} preview`}
             src={url}
             sandbox=""
-            className="h-[32rem] w-full border-0 bg-white"
+            className="max-h-184 w-full border-0 bg-white"
           />
         </Tabs.Content>
       </Tabs.Root>

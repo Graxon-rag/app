@@ -51,11 +51,11 @@ export function MarkdownViewer({ url, fileName }: ViewerProps) {
           </Tabs.List>
           <Tabs.Content
             value="rendered"
-            className="prose prose-sm max-h-[32rem] max-w-none overflow-auto p-4 dark:prose-invert"
+            className="prose prose-sm max-h-184 max-w-none overflow-auto p-4 dark:prose-invert"
           >
             <ReactMarkdown>{text}</ReactMarkdown>
           </Tabs.Content>
-          <Tabs.Content value="source" className="max-h-[32rem] overflow-auto">
+          <Tabs.Content value="source" className="max-h-184 overflow-auto">
             <pre className="whitespace-pre-wrap p-4 font-mono text-xs text-neutral-700 dark:text-neutral-300">
               {text}
             </pre>

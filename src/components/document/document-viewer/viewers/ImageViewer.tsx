@@ -33,7 +33,7 @@ export function ImageViewer({ url, fileName }: ViewerProps) {
             alt={fileName}
             onLoad={() => setLoaded(true)}
             onError={() => setErrored(true)}
-            className={`max-h-[28rem] max-w-full object-contain transition-opacity ${
+            className={`max-h-184 max-w-full object-contain transition-opacity ${
               loaded ? "opacity-100" : "opacity-0"
             }`}
           />

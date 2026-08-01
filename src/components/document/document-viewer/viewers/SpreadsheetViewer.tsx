@@ -19,9 +19,11 @@ function Table({ rows }: { rows: string[][] }) {
   }
   const [header, ...body] = rows;
   return (
-    <div className="overflow-auto">
+    // Moved max-h-[32rem] here so overflow-auto knows when to trigger the scrollbar
+    <div className="max-h-184 overflow-auto">
       <table className="w-full border-collapse text-left text-sm">
-        <thead className="sticky top-0 bg-neutral-100 dark:bg-neutral-800">
+        {/* Added z-10 so the sticky header stays visually above scrolling content */}
+        <thead className="sticky top-0 z-10 bg-neutral-100 dark:bg-neutral-800">
           <tr>
             {header.map((cell, i) => (
               <th
@@ -35,7 +37,10 @@ function Table({ rows }: { rows: string[][] }) {
         </thead>
         <tbody>
           {body.slice(0, MAX_ROWS).map((row, r) => (
-            <tr key={r} className="odd:bg-white even:bg-neutral-50 dark:odd:bg-neutral-900 dark:even:bg-neutral-900/50">
+            <tr
+              key={r}
+              className="odd:bg-white even:bg-neutral-50 dark:odd:bg-neutral-900 dark:even:bg-neutral-900/50"
+            >
               {row.map((cell, c) => (
                 <td
                   key={c}
@@ -89,7 +94,7 @@ export function SpreadsheetViewer({ url, fileName }: ViewerProps) {
                 header: 1,
                 blankrows: false,
               }) as string[][],
-            }))
+            })),
           );
         }
       } catch {
@@ -105,13 +110,13 @@ export function SpreadsheetViewer({ url, fileName }: ViewerProps) {
   return (
     <div className="flex flex-col overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800">
       <Toolbar url={url} fileName={fileName} />
-      {error && <ErrorState message="Couldn't parse this spreadsheet." url={url} fileName={fileName} />}
-      {!error && !sheets && <LoadingState label="Parsing spreadsheet…" />}
-      {!error && sheets && sheets.length === 1 && (
-        <div className="max-h-[32rem]">
-          <Table rows={sheets[0].rows} />
-        </div>
+      {error && (
+        <ErrorState message="Couldn't parse this spreadsheet." url={url} fileName={fileName} />
       )}
+      {!error && !sheets && <LoadingState label="Parsing spreadsheet…" />}
+
+      {/* Removed the redundant max-h-[32rem] wrapper divs here */}
+      {!error && sheets && sheets.length === 1 && <Table rows={sheets[0].rows} />}
       {!error && sheets && sheets.length > 1 && (
         <Tabs.Root defaultValue={sheets[0].name} className="flex flex-col">
           <Tabs.List className="flex gap-1 overflow-x-auto border-b border-neutral-200 bg-neutral-50 px-2 dark:border-neutral-800 dark:bg-neutral-900">
@@ -126,7 +131,7 @@ export function SpreadsheetViewer({ url, fileName }: ViewerProps) {
             ))}
           </Tabs.List>
           {sheets.map((s) => (
-            <Tabs.Content key={s.name} value={s.name} className="max-h-[32rem]">
+            <Tabs.Content key={s.name} value={s.name} className="outline-none">
               <Table rows={s.rows} />
             </Tabs.Content>
           ))}

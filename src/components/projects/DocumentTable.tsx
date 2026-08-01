@@ -183,7 +183,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                       onClick={() => handleObjectView(doc)}
                       className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none"
                     >
-                      Open in minIO
+                      Open in Object Store
                     </DropdownMenu.Item>
 
                     <DropdownMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />

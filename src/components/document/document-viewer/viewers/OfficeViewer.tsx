@@ -7,20 +7,18 @@ import { ErrorState } from "./shared/ErrorState";
 import { getExtension } from "../file-classification";
 
 interface OfficeViewerProps extends ViewerProps {
-  /**
-   * Only set true if `url` is fetchable by Microsoft/Google's servers
-   * (i.e. not behind auth, and won't expire in the next minute or two).
-   * Presigned URLs with short TTLs will break the embed.
-   */
   publiclyFetchable?: boolean;
 }
 
 type Status = "loading" | "ready" | "error" | "unsupported-client-render";
 
-// .docx renders client-side via docx-preview. .doc (legacy binary) and
-// .ppt/.pptx have no good client-side equivalent, so those always fall
-// through to the embed (if publicly fetchable) or the download card.
-export function OfficeViewer({ url, fileName, publiclyFetchable = false }: OfficeViewerProps) {
+export function OfficeViewer({ url, fileName, publiclyFetchable = true }: OfficeViewerProps) {
+  // 1. Check if the URL is local (localhost, 127.0.0.1, or a relative path)
+  const isLocalUrl = url.includes("localhost") || url.includes("127.0.0.1") || url.startsWith("/");
+
+  // 2. Override publiclyFetchable to false if it's a local URL
+  const canUseMicrosoftEmbed = publiclyFetchable && !isLocalUrl;
+
   const ext = getExtension(fileName);
   const canRenderClientSide = ext === ".docx";
   const containerRef = useRef<HTMLDivElement>(null);
@@ -32,13 +30,11 @@ export function OfficeViewer({ url, fileName, publiclyFetchable = false }: Offic
 
     (async () => {
       try {
-        const [{ renderAsync }, res] = await Promise.all([
-          import("docx-preview"),
-          fetch(url),
-        ]);
+        const [{ renderAsync }, res] = await Promise.all([import("docx-preview"), fetch(url)]);
         if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
         const blob = await res.blob();
         if (cancelled || !containerRef.current) return;
+
         await renderAsync(blob, containerRef.current, undefined, {
           className: "docx-preview",
           inWrapper: true,
@@ -54,22 +50,27 @@ export function OfficeViewer({ url, fileName, publiclyFetchable = false }: Offic
     };
   }, [url, canRenderClientSide]);
 
-  const embedUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`;
+  const embedUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
 
   return (
     <div className="flex flex-col overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800">
       <Toolbar url={url} fileName={fileName} />
 
       {canRenderClientSide && status !== "error" && (
-        <div className="relative max-h-[32rem] overflow-auto bg-neutral-100 p-4 dark:bg-neutral-900">
-          {status === "loading" && <LoadingState label="Rendering document…" />}
-          <div ref={containerRef} className={status === "loading" ? "hidden" : ""} />
+        <div className="relative max-h-184 overflow-auto bg-neutral-100 p-4 dark:bg-neutral-900">
+          {status === "loading" && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-neutral-100 dark:bg-neutral-900">
+              <LoadingState label="Rendering document…" />
+            </div>
+          )}
+          <div ref={containerRef} />
         </div>
       )}
 
       {(!canRenderClientSide || status === "error") &&
-        (publiclyFetchable ? (
-          <iframe title={fileName} src={embedUrl} className="h-[32rem] w-full border-0" />
+        /* 3. Use the derived variable here instead of the raw prop */
+        (canUseMicrosoftEmbed ? (
+          <iframe title={fileName} key={url} src={embedUrl} className="h-184 w-full border-0" />
         ) : (
           <div className="flex flex-col items-center justify-center gap-3 bg-neutral-50 px-6 py-10 dark:bg-neutral-900">
             <FileType2 className="h-8 w-8 text-neutral-400" strokeWidth={1.5} />

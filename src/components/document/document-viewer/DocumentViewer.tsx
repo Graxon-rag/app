@@ -33,6 +33,8 @@ export default function DocumentViewer({
   const kind = getViewerKind(fileName);
 
   const content = (() => {
+    console.log("file Kind", kind);
+
     switch (kind) {
       case "image":
         return <ImageViewer url={url} fileName={fileName} />;
@@ -43,6 +45,7 @@ export default function DocumentViewer({
       case "pdf":
         return <PdfViewer url={url} fileName={fileName} />;
       case "office":
+        publiclyFetchable = true;
         return <OfficeViewer url={url} fileName={fileName} publiclyFetchable={publiclyFetchable} />;
       case "spreadsheet":
         return <SpreadsheetViewer url={url} fileName={fileName} />;

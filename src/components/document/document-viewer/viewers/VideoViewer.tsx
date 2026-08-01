@@ -31,12 +31,7 @@ export function VideoViewer({ url, fileName }: ViewerProps) {
           </div>
         ) : (
           // eslint-disable-next-line jsx-a11y/media-has-caption
-          <video
-            controls
-            src={url}
-            onError={() => setErrored(true)}
-            className="max-h-[28rem] w-full"
-          />
+          <video controls src={url} onError={() => setErrored(true)} className="max-h-184 w-full" />
         )}
       </div>
     </div>

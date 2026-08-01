@@ -32,8 +32,10 @@ export function JsonViewer({ url, fileName }: ViewerProps) {
   return (
     <div className="flex flex-col overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800">
       <Toolbar url={url} fileName={fileName} />
-      <div className="max-h-[32rem] overflow-auto bg-white p-4 dark:bg-neutral-950">
-        {error && <ErrorState message={`Couldn't parse JSON: ${error}`} url={url} fileName={fileName} />}
+      <div className="max-h-184 overflow-auto bg-white p-4 dark:bg-neutral-950">
+        {error && (
+          <ErrorState message={`Couldn't parse JSON: ${error}`} url={url} fileName={fileName} />
+        )}
         {!error && data === undefined && <LoadingState label="Loading JSON…" />}
         {!error && data !== undefined && <JsonTree value={data} />}
       </div>
@@ -97,8 +99,11 @@ function JsonTree({ value, depth = 0 }: { value: unknown; depth?: number }) {
     );
   }
 
-  if (typeof value === "string") return <span className="text-emerald-700 dark:text-emerald-400">"{value}"</span>;
-  if (typeof value === "number") return <span className="text-amber-700 dark:text-amber-400">{value}</span>;
-  if (typeof value === "boolean") return <span className="text-purple-700 dark:text-purple-400">{String(value)}</span>;
+  if (typeof value === "string")
+    return <span className="text-emerald-700 dark:text-emerald-400">"{value}"</span>;
+  if (typeof value === "number")
+    return <span className="text-amber-700 dark:text-amber-400">{value}</span>;
+  if (typeof value === "boolean")
+    return <span className="text-purple-700 dark:text-purple-400">{String(value)}</span>;
   return <span>{String(value)}</span>;
 }

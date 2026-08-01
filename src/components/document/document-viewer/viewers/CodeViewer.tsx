@@ -48,7 +48,7 @@ export function CodeViewer({
       }
     >
       {!hideToolbar && <Toolbar url={url} fileName={fileName} />}
-      <div className="max-h-[32rem] overflow-auto">
+      <div className="max-h-184 overflow-auto">
         {error && <ErrorState message="Couldn't load this file." url={url} fileName={fileName} />}
         {!error && (text === null || !Highlighter) && <LoadingState label="Loading source…" />}
         {!error && text !== null && Highlighter && (
