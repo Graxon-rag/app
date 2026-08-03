@@ -3,6 +3,8 @@ import {
   CreateProjectInterface,
   ProjectInterface,
   ProjectDetailInterface,
+  ProjectConfigGetInterface,
+  ProjectConfigUpdateInterface,
 } from "@/interfaces/ProjectInterface";
 import { axiosClient } from "@/utils/axiosClient";
 
@@ -14,6 +16,16 @@ interface ProjectStore {
   getProjectDetails: (orgId: string, id: string) => Promise<void>;
   createProject(orgId: string, payload: CreateProjectInterface): Promise<void>;
   deleteProject: (orgId: string, id: string) => Promise<void>;
+  getProjectConfigByProject: (
+    orgId: string,
+    projectId: string,
+  ) => Promise<ProjectConfigGetInterface>;
+  updateProjectConfig: (
+    orgId: string,
+    projectId: string,
+    configId: string,
+    payload: ProjectConfigUpdateInterface,
+  ) => Promise<ProjectConfigGetInterface>;
 }
 
 export const useProjectStore = create<ProjectStore>((set, get) => ({
@@ -82,6 +94,31 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       if (data) {
         get().getAllProjects(orgId);
       }
+
+      return data;
+    } catch (error) {
+      console.log(error);
+    }
+  },
+  getProjectConfigByProject: async (orgId: string, projectId: string) => {
+    const url = `/api/projects-configs/${orgId}/${projectId}`;
+
+    const response = await axiosClient.get(url);
+    const data = response.data?.data ?? null;
+
+    return data;
+  },
+  updateProjectConfig: async (
+    orgId: string,
+    projectId: string,
+    configId: string,
+    config: ProjectConfigUpdateInterface,
+  ) => {
+    try {
+      const url = `/api/projects-configs/${orgId}/${projectId}/update/${configId}`;
+
+      const response = await axiosClient.put(url, config);
+      const data = response.data?.data ?? null;
 
       return data;
     } catch (error) {

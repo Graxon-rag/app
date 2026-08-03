@@ -10,12 +10,6 @@ import { LLMModelInterface } from "@/interfaces/LLMModelInterface";
 // "org_id": "dev",
 // "name": "Test",
 // "description": "Test",
-// "llm_model_id": "daf844e6-e801-46d2-9244-b34d437188a6",
-// "embedding_model_id": "3ef1a87a-1c63-490c-a744-cb0129247315",
-// "sparse_text_model_id": "3959e9cf-6736-4f1e-b7fd-7abbcab0e68b",
-// "reranker_model_id": "903e8428-066f-4b02-bf7e-e23d817f8cf9",
-// "llm_model_credential_id": "3dffd766-7084-4424-a3fd-d3af9718f401",
-// "embedding_model_credential_id": "87f79bd4-248b-4167-9241-09d79c6fa275",
 // "created_at": "2026-05-03T05:26:44.174085Z",
 // "updated_at": "2026-05-03T05:26:44.174090Z"
 // }
@@ -26,12 +20,6 @@ export interface ProjectInterface {
   org_id: string;
   name: string;
   description: string;
-  llm_model_id: string;
-  embedding_model_id: string;
-  sparse_text_model_id: string;
-  reranker_model_id: string;
-  llm_model_credential_id: string;
-  embedding_model_credential_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -40,24 +28,102 @@ export interface ProjectInterface {
 //   "org_id": "string",
 //   "name": "string",
 //   "description": "string",
-//   "llm_model_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-//   "embedding_model_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-//   "sparse_text_model_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-//   "reranker_model_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-//   "llm_model_credential_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-//   "embedding_model_credential_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+//   "project_metadata": {},
+//   "config": {}
 // }
+
+export interface ProjectConfigCreateInterface {
+  project_id: string;
+
+  graph_db_enable: boolean;
+  reranker_enable: boolean;
+  sparse_embedding_enable: boolean;
+  llm_tag_extraction_enable: boolean;
+
+  llm_model_id: string;
+  llm_model_credential_id: string;
+
+  embedding_model_id: string;
+  embedding_model_credential_id: string;
+
+  ocr_model_id: string | null;
+  ocr_model_credential_id: string | null;
+
+  sparse_text_model_id: string | null;
+  sparse_text_model_credential_id: string | null;
+
+  reranker_model_id: string | null;
+  reranker_model_credential_id: string | null;
+
+  audio_model_id: string | null;
+  audio_model_credential_id: string | null;
+
+  video_model_id: string | null;
+  video_model_credential_id: string | null;
+}
+
+export interface ProjectConfigGetInterface {
+  id: string;
+  project_id: string;
+
+  graph_db_enable: boolean;
+  reranker_enable: boolean;
+  sparse_embedding_enable: boolean;
+  llm_tag_extraction_enable: boolean;
+
+  llm_model_id: string;
+  llm_model_credential_id: string;
+
+  embedding_model_id: string;
+  embedding_model_credential_id: string;
+
+  ocr_model_id: string | null;
+  ocr_model_credential_id: string | null;
+
+  sparse_text_model_id: string | null;
+  sparse_text_model_credential_id: string | null;
+
+  reranker_model_id: string | null;
+  reranker_model_credential_id: string | null;
+
+  audio_model_id: string | null;
+  audio_model_credential_id: string | null;
+
+  video_model_id: string | null;
+  video_model_credential_id: string | null;
+
+  created_at: string;
+  updated_at: string;
+}
+export interface ProjectConfigUpdateInterface {
+  llm_model_id?: string;
+  llm_model_credential_id?: string;
+
+  sparse_text_model_id?: string | null;
+  sparse_text_model_credential_id?: string | null;
+
+  reranker_model_id?: string | null;
+  reranker_model_credential_id?: string | null;
+
+  ocr_model_id?: string | null;
+  ocr_model_credential_id?: string | null;
+
+  audio_model_id?: string | null;
+  audio_model_credential_id?: string | null;
+
+  video_model_id?: string | null;
+  video_model_credential_id?: string | null;
+
+  llm_tag_extraction_enable?: boolean;
+  reranker_enable?: boolean;
+}
 
 export interface CreateProjectInterface {
   org_id: string;
   name: string;
   description: string;
-  llm_model_id: string;
-  embedding_model_id: string;
-  sparse_text_model_id: string;
-  reranker_model_id: string;
-  llm_model_credential_id: string;
-  embedding_model_credential_id: string;
+  config: ProjectConfigCreateInterface;
+  project_metadata?: any;
 }
 
 // {
