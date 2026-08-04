@@ -128,7 +128,9 @@ function ProjectDetails() {
         )}
 
         {/* CONFIG TAB */}
-        {tab === "config" && <ConfigTab details={{}} />}
+        {tab === "config" && org_id && project_id && (
+          <ConfigTab orgId={org_id} projectId={project_id} />
+        )}
 
         {/* QUERY TAB */}
         {tab === "query" && org_id && project_id && <QueryTab />}

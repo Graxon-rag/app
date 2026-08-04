@@ -163,7 +163,7 @@ function CreateWebhookDialog({
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Slack notifications"
+                placeholder="e.g. Graxon notifications"
                 className="w-full h-10 px-3 rounded-lg border bg-white dark:bg-zinc-800 dark:border-zinc-700 text-sm focus:outline-none focus:ring-2 focus:ring-primary-600"
               />
             </div>

@@ -2,7 +2,7 @@ import { create } from "zustand";
 import {
   CreateProjectInterface,
   ProjectInterface,
-  ProjectDetailInterface,
+  ProjectConfigDetailInterface,
   ProjectConfigGetInterface,
   ProjectConfigUpdateInterface,
 } from "@/interfaces/ProjectInterface";
@@ -20,6 +20,11 @@ interface ProjectStore {
     orgId: string,
     projectId: string,
   ) => Promise<ProjectConfigGetInterface>;
+  getProjectConfigDetailsByProject: (
+    orgId: string,
+    projectId: string,
+  ) => Promise<ProjectConfigDetailInterface>;
+
   updateProjectConfig: (
     orgId: string,
     projectId: string,
@@ -101,7 +106,16 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     }
   },
   getProjectConfigByProject: async (orgId: string, projectId: string) => {
-    const url = `/api/projects-configs/${orgId}/${projectId}`;
+    const url = `/api/project-configs/${orgId}/${projectId}`;
+
+    const response = await axiosClient.get(url);
+    const data = response.data?.data ?? null;
+
+    return data;
+  },
+
+  getProjectConfigDetailsByProject: async (orgId: string, projectId: string) => {
+    const url = `/api/project-configs/${orgId}/${projectId}/details`;
 
     const response = await axiosClient.get(url);
     const data = response.data?.data ?? null;
@@ -115,7 +129,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     config: ProjectConfigUpdateInterface,
   ) => {
     try {
-      const url = `/api/projects-configs/${orgId}/${projectId}/update/${configId}`;
+      const url = `/api/project-configs/${orgId}/${projectId}/update/${configId}`;
 
       const response = await axiosClient.put(url, config);
       const data = response.data?.data ?? null;
