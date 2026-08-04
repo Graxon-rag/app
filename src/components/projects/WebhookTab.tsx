@@ -10,11 +10,12 @@ import {
   Check,
   Eye,
   EyeOff,
-  ExternalLink,
+  Info,
   Loader2,
 } from "lucide-react";
 import { useWebhookStore } from "@/store/webhookStore";
 import { CreateWebhookInterface, WebhookInterface } from "@/interfaces/WebhookInterface";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@radix-ui/react-tooltip";
 
 interface WebhookTabProps {
   orgId: string;
@@ -179,7 +180,38 @@ function CreateWebhookDialog({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-500">Token</label>
+              <div className="flex items-center gap-1.5">
+                <label className="text-xs font-medium text-zinc-500">Token</label>
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors"
+                      >
+                        <Info className="w-3.5 h-3.5" />
+                      </button>
+                    </TooltipTrigger>
+
+                    <TooltipContent
+                      side="left"
+                      align="center"
+                      sideOffset={8}
+                      className=" text-xs leading-5"
+                    >
+                      <span className="bg-gray-700 text-white rounded p-2">
+                        The token will be sent in the{" "}
+                        <code className="rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-[11px] text-zinc-200">
+                          X-GRAXON-TOKEN
+                        </code>{" "}
+                        header with every webhook request.
+                      </span>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+
               <input
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
@@ -345,10 +377,39 @@ function WebhookRow({
 
         <div className="flex items-center gap-1.5 text-xs text-zinc-500 pl-6">
           <span className="font-mono">{showToken ? webhook.token : maskedToken}</span>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors"
+                >
+                  <Info className="w-3.5 h-3.5" />
+                </button>
+              </TooltipTrigger>
+
+              <TooltipContent
+                side="right"
+                align="center"
+                sideOffset={8}
+                className=" text-xs leading-5"
+              >
+                <span className="bg-gray-700 text-white rounded p-2">
+                  The token will be sent in the{" "}
+                  <code className="rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-[11px] text-zinc-200">
+                    X-GRAXON-TOKEN
+                  </code>{" "}
+                  header with every webhook request.
+                </span>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
           <button
             type="button"
             onClick={() => setShowToken((v) => !v)}
-            className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+            className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition ml-1"
             title={showToken ? "Hide token" : "Show token"}
           >
             {showToken ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
