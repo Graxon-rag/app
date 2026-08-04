@@ -226,7 +226,7 @@ function UpdateModelModal({
       case "reranker":
         payload.reranker_model_id = modelId;
         payload.reranker_model_credential_id = credentialId || null;
-        payload.reranker_enable = true; // Auto-enables if not previously enabled
+        payload.reranker_enable = true; // Auto-enables when model is updated
         break;
       case "ocr":
         payload.ocr_model_id = modelId;
@@ -244,7 +244,7 @@ function UpdateModelModal({
 
     try {
       await updateProjectConfig(orgId, projectId, configId, payload);
-      onSuccess(); // Trigger refresh in parent
+      onSuccess();
       onClose();
     } catch (err) {
       console.error(err);
@@ -407,6 +407,7 @@ function ConfigTab({ orgId, projectId }: ConfigTabProps) {
   const [config, setConfig] = useState<ProjectConfigDetailInterface | null>(null);
   const [loading, setLoading] = useState(true);
   const [togglingTag, setTogglingTag] = useState(false);
+  const [togglingReranker, setTogglingReranker] = useState(false);
   const [editingType, setEditingType] = useState<EditableModelType | null>(null);
 
   const fetchConfig = useCallback(async () => {
@@ -437,6 +438,31 @@ function ConfigTab({ orgId, projectId }: ConfigTabProps) {
       console.error("Failed to toggle tag extraction", error);
     } finally {
       setTogglingTag(false);
+    }
+  };
+
+  const handleToggleReranker = async () => {
+    if (!config || togglingReranker) return;
+
+    // If currently enabled, we disable it and set IDs to null
+    if (config.reranker_enable) {
+      setTogglingReranker(true);
+      try {
+        await updateProjectConfig(orgId, projectId, config.id, {
+          reranker_enable: false,
+          reranker_model_id: null,
+          reranker_model_credential_id: null,
+        });
+        await fetchConfig();
+      } catch (error) {
+        console.error("Failed to disable reranker", error);
+      } finally {
+        setTogglingReranker(false);
+      }
+    } else {
+      // If disabled, intercept the click and open the model selection modal
+      // instead, since they need to pick a model to enable it.
+      setEditingType("reranker");
     }
   };
 
@@ -477,7 +503,33 @@ function ConfigTab({ orgId, projectId }: ConfigTabProps) {
               },
               {
                 label: "Reranker",
-                value: config.reranker_enable ? "Enabled" : "Disabled",
+                value: (
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={
+                        config.reranker_enable ? "text-black dark:text-white" : "text-zinc-500"
+                      }
+                    >
+                      {config.reranker_enable ? "Enabled" : "Disabled"}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={togglingReranker}
+                      onClick={handleToggleReranker}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                        config.reranker_enable
+                          ? "bg-black dark:bg-white"
+                          : "bg-zinc-300 dark:bg-zinc-700"
+                      } ${togglingReranker ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-black transition-transform ${
+                          config.reranker_enable ? "translate-x-[18px]" : "translate-x-0.5"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                ),
               },
               {
                 label: "Tag Extraction",
@@ -505,7 +557,7 @@ function ConfigTab({ orgId, projectId }: ConfigTabProps) {
                       <span
                         className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-black transition-transform ${
                           config.llm_tag_extraction_enable
-                            ? "translate-x-4.5 translate-x-[18px]"
+                            ? "translate-x-[18px]"
                             : "translate-x-0.5"
                         }`}
                       />
