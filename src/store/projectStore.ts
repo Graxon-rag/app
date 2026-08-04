@@ -10,7 +10,7 @@ import { axiosClient } from "@/utils/axiosClient";
 
 interface ProjectStore {
   projects: ProjectInterface[] | null;
-  selectedProject: ProjectDetailInterface | null;
+  selectedProject: ProjectInterface | null;
   getAllProjects: (orgId: string) => Promise<void>;
   getProject: (orgId: string, id: string) => Promise<void>;
   getProjectDetails: (orgId: string, id: string) => Promise<void>;
@@ -50,7 +50,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
       const response = await axiosClient.get(url);
       const data = response.data?.data ?? null;
-
+      set({ selectedProject: data });
       return data;
     } catch (error) {
       console.log(error);

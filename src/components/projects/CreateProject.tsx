@@ -12,10 +12,6 @@ import { useModelProviderStore } from "@/store/modelProviderStore";
 import { useProjectStore } from "@/store/projectStore";
 
 // ─── types ──────────────────────────────────────────────────────────────────
-// NOTE: project_id is intentionally left out of the create-time config payload.
-// The backend creates the project first and assigns project_id to the config
-// itself — the client never needs to know or send it here.
-
 type ProviderType = "local" | "cloud";
 
 interface ProjectConfigCreatePayload {
@@ -152,6 +148,40 @@ function Toggle({
   );
 }
 
+function CredentialSelect({
+  provider,
+  credentials,
+  value,
+  onChange,
+  loading,
+}: {
+  provider: string;
+  credentials: { id: string; name: string }[] | null;
+  value: string;
+  onChange: (id: string) => void;
+  loading: boolean;
+}) {
+  if (!provider) return <Ghost>choose provider first</Ghost>;
+  if (loading) return <Ghost>fetching…</Ghost>;
+  if (credentials && credentials.length === 0) {
+    return (
+      <div className="w-full h-9 px-3 flex items-center rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 text-sm select-none truncate">
+        No credentials found. Please add one.
+      </div>
+    );
+  }
+  return (
+    <select className={SELECT} value={value} onChange={(e) => onChange(e.target.value)}>
+      <option value="">Select credential</option>
+      {credentials?.map((c) => (
+        <option key={c.id} value={c.id}>
+          {c.name}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 function ProviderRow({
   providers,
   providerValue,
@@ -198,10 +228,12 @@ function ProviderRow({
 
       <div>
         <label className={LABEL}>{modelLabel}</label>
-        {loading ? (
+        {!providerValue ? (
+          <Ghost>choose provider first</Ghost>
+        ) : loading ? (
           <Ghost>fetching…</Ghost>
         ) : options.length === 0 ? (
-          <Ghost>choose provider first</Ghost>
+          <Ghost>no models found</Ghost>
         ) : (
           <select
             className={SELECT}
@@ -222,8 +254,6 @@ function ProviderRow({
   );
 }
 
-// A model/provider row for model types that ship in both local + cloud
-// flavors (sparse, reranker). Local models don't need a credential.
 function LocalCloudProviderRow({
   providerType,
   onProviderTypeChange,
@@ -291,10 +321,12 @@ function LocalCloudProviderRow({
 
           <div>
             <label className={LABEL}>Model</label>
-            {loading ? (
+            {!providerValue ? (
+              <Ghost>choose provider first</Ghost>
+            ) : loading ? (
               <Ghost>fetching…</Ghost>
             ) : options.length === 0 ? (
-              <Ghost>{providerValue ? "no models found" : "choose provider first"}</Ghost>
+              <Ghost>no models found</Ghost>
             ) : (
               <select
                 className={SELECT}
@@ -366,7 +398,6 @@ export default function CreateProjectIndex() {
   const [llmProvider, setLlmProvider] = useState("");
   const [llmModelId, setLlmModelId] = useState("");
   const [llmLoading, setLlmLoading] = useState(false);
-  const [llmCredProvider, setLlmCredProvider] = useState("");
   const [llmCredentialId, setLlmCredentialId] = useState("");
   const [llmCredentials, setLlmCredentials] = useState<{ id: string; name: string }[] | null>(null);
   const [llmCredLoading, setLlmCredLoading] = useState(false);
@@ -375,7 +406,6 @@ export default function CreateProjectIndex() {
   const [embProvider, setEmbProvider] = useState("");
   const [embModelId, setEmbModelId] = useState("");
   const [embLoading, setEmbLoading] = useState(false);
-  const [embCredProvider, setEmbCredProvider] = useState("");
   const [embCredentialId, setEmbCredentialId] = useState("");
   const [embCredentials, setEmbCredentials] = useState<{ id: string; name: string }[] | null>(null);
   const [embCredLoading, setEmbCredLoading] = useState(false);
@@ -384,7 +414,6 @@ export default function CreateProjectIndex() {
   const [sparseType, setSparseType] = useState<ProviderType | "">("");
   const [sparseProvider, setSparseProvider] = useState("");
   const [sparseModelId, setSparseModelId] = useState("");
-  const [sparseCredProvider, setSparseCredProvider] = useState("");
   const [sparseCredentialId, setSparseCredentialId] = useState("");
   const [sparseCredentials, setSparseCredentials] = useState<{ id: string; name: string }[] | null>(
     null,
@@ -395,7 +424,6 @@ export default function CreateProjectIndex() {
   const [rerankerType, setRerankerType] = useState<ProviderType | "">("");
   const [rerankerProvider, setRerankerProvider] = useState("");
   const [rerankerModelId, setRerankerModelId] = useState("");
-  const [rerankerCredProvider, setRerankerCredProvider] = useState("");
   const [rerankerCredentialId, setRerankerCredentialId] = useState("");
   const [rerankerCredentials, setRerankerCredentials] = useState<
     { id: string; name: string }[] | null
@@ -406,7 +434,6 @@ export default function CreateProjectIndex() {
   const [ocrProvider, setOcrProvider] = useState("");
   const [ocrModelId, setOcrModelId] = useState("");
   const [ocrLoading, setOcrLoading] = useState(false);
-  const [ocrCredProvider, setOcrCredProvider] = useState("");
   const [ocrCredentialId, setOcrCredentialId] = useState("");
   const [ocrCredentials, setOcrCredentials] = useState<{ id: string; name: string }[] | null>(null);
   const [ocrCredLoading, setOcrCredLoading] = useState(false);
@@ -415,7 +442,6 @@ export default function CreateProjectIndex() {
   const [audioProvider, setAudioProvider] = useState("");
   const [audioModelId, setAudioModelId] = useState("");
   const [audioLoading, setAudioLoading] = useState(false);
-  const [audioCredProvider, setAudioCredProvider] = useState("");
   const [audioCredentialId, setAudioCredentialId] = useState("");
   const [audioCredentials, setAudioCredentials] = useState<{ id: string; name: string }[] | null>(
     null,
@@ -426,7 +452,6 @@ export default function CreateProjectIndex() {
   const [videoProvider, setVideoProvider] = useState("");
   const [videoModelId, setVideoModelId] = useState("");
   const [videoLoading, setVideoLoading] = useState(false);
-  const [videoCredProvider, setVideoCredProvider] = useState("");
   const [videoCredentialId, setVideoCredentialId] = useState("");
   const [videoCredentials, setVideoCredentials] = useState<{ id: string; name: string }[] | null>(
     null,
@@ -448,9 +473,6 @@ export default function CreateProjectIndex() {
     getAudioModelProviders().then((res) => setAudioProviders(res ?? []));
     getVideoModelProviders().then((res) => setVideoProviders(res ?? []));
 
-    // sparse + reranker models carry provider_type on each record, so we
-    // pull the full org list once and filter client-side as the user picks
-    // a deployment type and provider.
     getAllSparseTextModels(org_id);
     getAllReRankerModels(org_id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -475,14 +497,13 @@ export default function CreateProjectIndex() {
   const handleLlmProvider = async (provider: string) => {
     setLlmProvider(provider);
     setLlmModelId("");
+    setLlmCredentialId("");
     if (!provider || !org_id) return;
+
     setLlmLoading(true);
     await getAllProviderLLMModels(org_id, provider);
     setLlmLoading(false);
-  };
-  const handleLlmCredProvider = (provider: string) => {
-    setLlmCredProvider(provider);
-    setLlmCredentialId("");
+
     fetchCredentials(provider, setLlmCredLoading, setLlmCredentials);
   };
 
@@ -490,14 +511,13 @@ export default function CreateProjectIndex() {
   const handleEmbProvider = async (provider: string) => {
     setEmbProvider(provider);
     setEmbModelId("");
+    setEmbCredentialId("");
     if (!provider || !org_id) return;
+
     setEmbLoading(true);
     await getAllProviderEmbeddingModels(org_id, provider);
     setEmbLoading(false);
-  };
-  const handleEmbCredProvider = (provider: string) => {
-    setEmbCredProvider(provider);
-    setEmbCredentialId("");
+
     fetchCredentials(provider, setEmbCredLoading, setEmbCredentials);
   };
 
@@ -506,18 +526,16 @@ export default function CreateProjectIndex() {
     setSparseType(t);
     setSparseProvider("");
     setSparseModelId("");
-    setSparseCredProvider("");
     setSparseCredentialId("");
     setSparseCredentials(null);
   };
   const handleSparseProvider = (provider: string) => {
     setSparseProvider(provider);
     setSparseModelId("");
-  };
-  const handleSparseCredProvider = (provider: string) => {
-    setSparseCredProvider(provider);
     setSparseCredentialId("");
-    fetchCredentials(provider, setSparseCredLoading, setSparseCredentials);
+    if (sparseType === "cloud") {
+      fetchCredentials(provider, setSparseCredLoading, setSparseCredentials);
+    }
   };
 
   // ── Reranker handlers ────────────────────────────────────────────────
@@ -525,32 +543,29 @@ export default function CreateProjectIndex() {
     setRerankerType(t);
     setRerankerProvider("");
     setRerankerModelId("");
-    setRerankerCredProvider("");
     setRerankerCredentialId("");
     setRerankerCredentials(null);
   };
   const handleRerankerProvider = (provider: string) => {
     setRerankerProvider(provider);
     setRerankerModelId("");
-  };
-  const handleRerankerCredProvider = (provider: string) => {
-    setRerankerCredProvider(provider);
     setRerankerCredentialId("");
-    fetchCredentials(provider, setRerankerCredLoading, setRerankerCredentials);
+    if (rerankerType === "cloud") {
+      fetchCredentials(provider, setRerankerCredLoading, setRerankerCredentials);
+    }
   };
 
   // ── OCR handlers ─────────────────────────────────────────────────────
   const handleOcrProvider = async (provider: string) => {
     setOcrProvider(provider);
     setOcrModelId("");
+    setOcrCredentialId("");
     if (!provider || !org_id) return;
+
     setOcrLoading(true);
     await getAllProviderOCRModels(org_id, provider);
     setOcrLoading(false);
-  };
-  const handleOcrCredProvider = (provider: string) => {
-    setOcrCredProvider(provider);
-    setOcrCredentialId("");
+
     fetchCredentials(provider, setOcrCredLoading, setOcrCredentials);
   };
 
@@ -558,14 +573,13 @@ export default function CreateProjectIndex() {
   const handleAudioProvider = async (provider: string) => {
     setAudioProvider(provider);
     setAudioModelId("");
+    setAudioCredentialId("");
     if (!provider || !org_id) return;
+
     setAudioLoading(true);
     await getAllProviderAudioModels(org_id, provider);
     setAudioLoading(false);
-  };
-  const handleAudioCredProvider = (provider: string) => {
-    setAudioCredProvider(provider);
-    setAudioCredentialId("");
+
     fetchCredentials(provider, setAudioCredLoading, setAudioCredentials);
   };
 
@@ -573,14 +587,13 @@ export default function CreateProjectIndex() {
   const handleVideoProvider = async (provider: string) => {
     setVideoProvider(provider);
     setVideoModelId("");
+    setVideoCredentialId("");
     if (!provider || !org_id) return;
+
     setVideoLoading(true);
     await getAllProviderVideoModels(org_id, provider);
     setVideoLoading(false);
-  };
-  const handleVideoCredProvider = (provider: string) => {
-    setVideoCredProvider(provider);
-    setVideoCredentialId("");
+
     fetchCredentials(provider, setVideoCredLoading, setVideoCredentials);
   };
 
@@ -769,8 +782,8 @@ export default function CreateProjectIndex() {
             />
           </div>
           <LockNote>
-            Graph database, sparse embeddings, and reranker can only be set now — they can't be
-            enabled or disabled after the project is created.
+            Graph database and sparse embeddings can only be set now — they can't be enabled or
+            disabled after the project is created.
           </LockNote>
         </div>
 
@@ -786,19 +799,20 @@ export default function CreateProjectIndex() {
             onModelChange={setLlmModelId}
             loading={llmLoading}
           />
-          <div className="mt-3">
-            <p className="text-xs text-zinc-500 mb-2">Credential</p>
-            <ProviderRow
-              providers={llmProviders}
-              providerValue={llmCredProvider}
-              onProviderChange={handleLlmCredProvider}
-              modelOptions={llmCredentials}
-              modelValue={llmCredentialId}
-              onModelChange={setLlmCredentialId}
-              loading={llmCredLoading}
-              modelLabel="Credential"
-            />
-          </div>
+          {llmProvider && (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <div>
+                <label className={LABEL}>Credential</label>
+                <CredentialSelect
+                  provider={llmProvider}
+                  credentials={llmCredentials}
+                  value={llmCredentialId}
+                  onChange={setLlmCredentialId}
+                  loading={llmCredLoading}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Embedding model */}
@@ -813,19 +827,20 @@ export default function CreateProjectIndex() {
             onModelChange={setEmbModelId}
             loading={embLoading}
           />
-          <div className="mt-3">
-            <p className="text-xs text-zinc-500 mb-2">Credential</p>
-            <ProviderRow
-              providers={embProviders}
-              providerValue={embCredProvider}
-              onProviderChange={handleEmbCredProvider}
-              modelOptions={embCredentials}
-              modelValue={embCredentialId}
-              onModelChange={setEmbCredentialId}
-              loading={embCredLoading}
-              modelLabel="Credential"
-            />
-          </div>
+          {embProvider && (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <div>
+                <label className={LABEL}>Credential</label>
+                <CredentialSelect
+                  provider={embProvider}
+                  credentials={embCredentials}
+                  value={embCredentialId}
+                  onChange={setEmbCredentialId}
+                  loading={embCredLoading}
+                />
+              </div>
+            </div>
+          )}
           <p className="text-[11px] text-zinc-500 mt-2">
             Note: the embedding model can't be changed once the project is created.
           </p>
@@ -846,19 +861,18 @@ export default function CreateProjectIndex() {
               onModelChange={setSparseModelId}
               loading={false}
             />
-            {sparseType === "cloud" && (
-              <div className="mt-3">
-                <p className="text-xs text-zinc-500 mb-2">Credential</p>
-                <ProviderRow
-                  providers={sparseProviders}
-                  providerValue={sparseCredProvider}
-                  onProviderChange={handleSparseCredProvider}
-                  modelOptions={sparseCredentials}
-                  modelValue={sparseCredentialId}
-                  onModelChange={setSparseCredentialId}
-                  loading={sparseCredLoading}
-                  modelLabel="Credential"
-                />
+            {sparseType === "cloud" && sparseProvider && (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <div>
+                  <label className={LABEL}>Credential</label>
+                  <CredentialSelect
+                    provider={sparseProvider}
+                    credentials={sparseCredentials}
+                    value={sparseCredentialId}
+                    onChange={setSparseCredentialId}
+                    loading={sparseCredLoading}
+                  />
+                </div>
               </div>
             )}
             {sparseType === "local" && (
@@ -884,19 +898,18 @@ export default function CreateProjectIndex() {
               onModelChange={setRerankerModelId}
               loading={false}
             />
-            {rerankerType === "cloud" && (
-              <div className="mt-3">
-                <p className="text-xs text-zinc-500 mb-2">Credential</p>
-                <ProviderRow
-                  providers={rerankerProviders}
-                  providerValue={rerankerCredProvider}
-                  onProviderChange={handleRerankerCredProvider}
-                  modelOptions={rerankerCredentials}
-                  modelValue={rerankerCredentialId}
-                  onModelChange={setRerankerCredentialId}
-                  loading={rerankerCredLoading}
-                  modelLabel="Credential"
-                />
+            {rerankerType === "cloud" && rerankerProvider && (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <div>
+                  <label className={LABEL}>Credential</label>
+                  <CredentialSelect
+                    provider={rerankerProvider}
+                    credentials={rerankerCredentials}
+                    value={rerankerCredentialId}
+                    onChange={setRerankerCredentialId}
+                    loading={rerankerCredLoading}
+                  />
+                </div>
               </div>
             )}
             {rerankerType === "local" && (
@@ -919,19 +932,18 @@ export default function CreateProjectIndex() {
             onModelChange={setOcrModelId}
             loading={ocrLoading}
           />
-          {ocrModelId && (
-            <div className="mt-3">
-              <p className="text-xs text-zinc-500 mb-2">Credential</p>
-              <ProviderRow
-                providers={ocrProviders}
-                providerValue={ocrCredProvider}
-                onProviderChange={handleOcrCredProvider}
-                modelOptions={ocrCredentials}
-                modelValue={ocrCredentialId}
-                onModelChange={setOcrCredentialId}
-                loading={ocrCredLoading}
-                modelLabel="Credential"
-              />
+          {ocrProvider && (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <div>
+                <label className={LABEL}>Credential</label>
+                <CredentialSelect
+                  provider={ocrProvider}
+                  credentials={ocrCredentials}
+                  value={ocrCredentialId}
+                  onChange={setOcrCredentialId}
+                  loading={ocrCredLoading}
+                />
+              </div>
             </div>
           )}
         </div>
@@ -948,19 +960,18 @@ export default function CreateProjectIndex() {
             onModelChange={setAudioModelId}
             loading={audioLoading}
           />
-          {audioModelId && (
-            <div className="mt-3">
-              <p className="text-xs text-zinc-500 mb-2">Credential</p>
-              <ProviderRow
-                providers={audioProviders}
-                providerValue={audioCredProvider}
-                onProviderChange={handleAudioCredProvider}
-                modelOptions={audioCredentials}
-                modelValue={audioCredentialId}
-                onModelChange={setAudioCredentialId}
-                loading={audioCredLoading}
-                modelLabel="Credential"
-              />
+          {audioProvider && (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <div>
+                <label className={LABEL}>Credential</label>
+                <CredentialSelect
+                  provider={audioProvider}
+                  credentials={audioCredentials}
+                  value={audioCredentialId}
+                  onChange={setAudioCredentialId}
+                  loading={audioCredLoading}
+                />
+              </div>
             </div>
           )}
         </div>
@@ -977,19 +988,18 @@ export default function CreateProjectIndex() {
             onModelChange={setVideoModelId}
             loading={videoLoading}
           />
-          {videoModelId && (
-            <div className="mt-3">
-              <p className="text-xs text-zinc-500 mb-2">Credential</p>
-              <ProviderRow
-                providers={videoProviders}
-                providerValue={videoCredProvider}
-                onProviderChange={handleVideoCredProvider}
-                modelOptions={videoCredentials}
-                modelValue={videoCredentialId}
-                onModelChange={setVideoCredentialId}
-                loading={videoCredLoading}
-                modelLabel="Credential"
-              />
+          {videoProvider && (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <div>
+                <label className={LABEL}>Credential</label>
+                <CredentialSelect
+                  provider={videoProvider}
+                  credentials={videoCredentials}
+                  value={videoCredentialId}
+                  onChange={setVideoCredentialId}
+                  loading={videoCredLoading}
+                />
+              </div>
             </div>
           )}
         </div>

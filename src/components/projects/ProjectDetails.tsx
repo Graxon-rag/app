@@ -22,7 +22,7 @@ const TABS: { key: TabKey; label: string }[] = [
 function ProjectDetails() {
   const { org_id, project_id } = useParams();
 
-  const { selectedProject, getProjectDetails, deleteProject } = useProjectStore();
+  const { selectedProject, getProject, deleteProject } = useProjectStore();
 
   const [confirmDelete, setConfirmDelete] = useState("");
   const [openDelete, setOpenDelete] = useState(false);
@@ -38,7 +38,7 @@ function ProjectDetails() {
 
   useEffect(() => {
     if (org_id && project_id) {
-      getProjectDetails(org_id, project_id);
+      getProject(org_id, project_id);
     }
   }, [org_id, project_id]);
 
@@ -128,7 +128,7 @@ function ProjectDetails() {
         )}
 
         {/* CONFIG TAB */}
-        {tab === "config" && <ConfigTab details={p.details} />}
+        {tab === "config" && <ConfigTab details={{}} />}
 
         {/* QUERY TAB */}
         {tab === "query" && org_id && project_id && <QueryTab />}
