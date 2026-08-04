@@ -283,7 +283,7 @@ export interface ProjectConfigDetailInterface {
   sparse_text_model?: SparseTextModelInterface;
   sparse_text_model_credential?: ModelCredentialInterface;
 
-  reranker_model?: ModelCredentialInterface;
+  reranker_model?: ReRankerModelInterface;
   reranker_model_credential?: ModelCredentialInterface;
 
   ocr_model?: OCRModelInterface;

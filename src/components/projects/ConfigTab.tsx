@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import ConfigCard from "./ConfigCard";
 import {
-  ProjectConfigGetInterface,
+  ProjectConfigDetailInterface,
   ProjectConfigUpdateInterface,
 } from "@/interfaces/ProjectInterface";
 import { useProjectStore } from "@/store/projectStore";
@@ -402,25 +402,24 @@ function UpdateModelModal({
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 function ConfigTab({ orgId, projectId }: ConfigTabProps) {
-  const { getProjectConfigByProject } = useProjectStore();
+  const { getProjectConfigDetailsByProject } = useProjectStore();
 
-  // Note: Using `any` or extending your local interface if the backend returns populated nested objects
-  const [config, setConfig] = useState<ProjectConfigGetInterface | any>(null);
+  const [config, setConfig] = useState<ProjectConfigDetailInterface | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingType, setEditingType] = useState<EditableModelType | null>(null);
 
   const fetchConfig = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getProjectConfigByProject(orgId, projectId);
-      console.log("Fetched project config", data);
-      setConfig(data);
+      const data = await getProjectConfigDetailsByProject(orgId, projectId);
+      // Handles both direct object return or wrapped inside { data }
+      setConfig((data as any).data || data);
     } catch (error) {
-      console.error("Failed to fetch project config", error);
+      console.error("Failed to fetch project config details", error);
     } finally {
       setLoading(false);
     }
-  }, [orgId, projectId, getProjectConfigByProject]);
+  }, [orgId, projectId, getProjectConfigDetailsByProject]);
 
   useEffect(() => {
     fetchConfig();
@@ -443,80 +442,188 @@ function ConfigTab({ orgId, projectId }: ConfigTabProps) {
   }
 
   return (
-    <>
-      <div className="grid md:grid-cols-2 gap-4 items-start">
-        <ConfigCard
-          title="LLM Model"
-          subtitle={config?.llm_model?.name}
-          editable={true}
-          onEdit={() => setEditingType("llm")}
-          fields={[
-            { label: "ID", value: config?.llm_model?.id, mono: true },
-            { label: "Model", value: config?.llm_model?.model_id, mono: true },
-            { label: "Provider", value: config?.llm_model?.provider },
-            { label: "Description", value: config?.llm_model?.description },
-          ]}
-        />
+    <div className="pb-10">
+      {/* Models Section */}
+      <div className="mb-6">
+        <h3 className="text-sm font-medium text-black dark:text-white mb-4">Pipeline Models</h3>
+        <div className="grid md:grid-cols-2 gap-4 items-start">
+          <ConfigCard
+            title="LLM Model"
+            subtitle={config?.llm_model?.model_name || config?.llm_model?.name}
+            editable={true}
+            onEdit={() => setEditingType("llm")}
+            fields={[
+              { label: "ID", value: config?.llm_model?.id, mono: true },
+              { label: "Model", value: config?.llm_model?.model_id, mono: true },
+              { label: "Provider", value: config?.llm_model?.provider },
+              { label: "Description", value: config?.llm_model?.description },
+            ]}
+          />
 
-        <ConfigCard
-          title="Embedding Model"
-          subtitle={config?.embedding_model?.name}
-          editable={false}
-          fields={[
-            { label: "ID", value: config?.embedding_model?.id, mono: true },
-            { label: "Model", value: config?.embedding_model?.model_id, mono: true },
-            { label: "Provider", value: config?.embedding_model?.provider },
-            { label: "Dimension", value: config?.embedding_model?.dimension },
-            { label: "Description", value: config?.embedding_model?.description },
-          ]}
-        />
+          <ConfigCard
+            title="Embedding Model"
+            subtitle={config?.embedding_model?.model_name || config?.embedding_model?.name}
+            editable={false}
+            fields={[
+              { label: "ID", value: config?.embedding_model?.id, mono: true },
+              { label: "Model", value: config?.embedding_model?.model_id, mono: true },
+              { label: "Provider", value: config?.embedding_model?.provider },
+              { label: "Dimension", value: config?.embedding_model?.dimension },
+              { label: "Description", value: config?.embedding_model?.description },
+            ]}
+          />
 
-        <ConfigCard
-          title="Sparse Model"
-          subtitle={config?.sparse_text_model?.name}
-          editable={true}
-          onEdit={() => setEditingType("sparse")}
-          fields={[
-            { label: "ID", value: config?.sparse_text_model?.id, mono: true },
-            { label: "Provider", value: config?.sparse_text_model?.provider },
-            { label: "Description", value: config?.sparse_text_model?.description },
-          ]}
-        />
+          <ConfigCard
+            title="Sparse Model"
+            subtitle={config?.sparse_text_model?.model_name || config?.sparse_text_model?.name}
+            editable={true}
+            onEdit={() => setEditingType("sparse")}
+            fields={[
+              { label: "ID", value: config?.sparse_text_model?.id, mono: true },
+              { label: "Provider", value: config?.sparse_text_model?.provider },
+              { label: "Description", value: config?.sparse_text_model?.description },
+            ]}
+          />
 
-        <ConfigCard
-          title="Reranker"
-          subtitle={config?.reranker?.name}
-          editable={true}
-          onEdit={() => setEditingType("reranker")}
-          fields={[
-            { label: "ID", value: config?.reranker?.id, mono: true },
-            { label: "Provider", value: config?.reranker?.provider },
-            { label: "Model", value: config?.reranker?.model_name, mono: true },
-            { label: "Description", value: config?.reranker?.description },
-          ]}
-        />
+          <ConfigCard
+            title="Reranker"
+            subtitle={config?.reranker_model?.model_name || config?.reranker_model?.name}
+            editable={true}
+            onEdit={() => setEditingType("reranker")}
+            fields={[
+              { label: "ID", value: config?.reranker_model?.id, mono: true },
+              { label: "Provider", value: config?.reranker_model?.provider },
+              { label: "Model", value: (config?.reranker_model as any)?.model_id, mono: true },
+              { label: "Description", value: config?.reranker_model?.description },
+            ]}
+          />
 
-        <ConfigCard
-          title="LLM Credential"
-          subtitle={config?.llm_model_credential?.name}
-          editable={false}
-          fields={[
-            { label: "Provider", value: config?.llm_model_credential?.provider },
-            { label: "API Key", value: config?.llm_model_credential?.api_key, mono: true },
-            { label: "Description", value: config?.llm_model_credential?.description },
-          ]}
-        />
+          <ConfigCard
+            title="OCR Model"
+            subtitle={config?.ocr_model?.model_name || config?.ocr_model?.name}
+            editable={true}
+            onEdit={() => setEditingType("ocr")}
+            fields={[
+              { label: "ID", value: config?.ocr_model?.id, mono: true },
+              { label: "Provider", value: config?.ocr_model?.provider },
+              { label: "Model", value: config?.ocr_model?.model_id, mono: true },
+              { label: "Description", value: config?.ocr_model?.description },
+            ]}
+          />
 
-        <ConfigCard
-          title="Embedding Credential"
-          subtitle={config?.embedding_model_credential?.name}
-          editable={false}
-          fields={[
-            { label: "Provider", value: config?.embedding_model_credential?.provider },
-            { label: "API Key", value: config?.embedding_model_credential?.api_key, mono: true },
-            { label: "Description", value: config?.embedding_model_credential?.description },
-          ]}
-        />
+          <ConfigCard
+            title="Audio Model"
+            subtitle={config?.audio_model?.model_name || config?.audio_model?.name}
+            editable={true}
+            onEdit={() => setEditingType("audio")}
+            fields={[
+              { label: "ID", value: config?.audio_model?.id, mono: true },
+              { label: "Provider", value: config?.audio_model?.provider },
+              { label: "Model", value: config?.audio_model?.model_id, mono: true },
+              { label: "Description", value: config?.audio_model?.description },
+            ]}
+          />
+
+          <ConfigCard
+            title="Video Model"
+            subtitle={config?.video_model?.model_name || config?.video_model?.name}
+            editable={true}
+            onEdit={() => setEditingType("video")}
+            fields={[
+              { label: "ID", value: config?.video_model?.id, mono: true },
+              { label: "Provider", value: config?.video_model?.provider },
+              { label: "Model", value: config?.video_model?.model_id, mono: true },
+              { label: "Description", value: config?.video_model?.description },
+            ]}
+          />
+        </div>
+      </div>
+
+      {/* Credentials Section */}
+      <div>
+        <h3 className="text-sm font-medium text-black dark:text-white mb-4">Credentials</h3>
+        <div className="grid md:grid-cols-2 gap-4 items-start">
+          <ConfigCard
+            title="LLM Credential"
+            subtitle={config?.llm_model_credential?.name}
+            editable={false}
+            fields={[
+              { label: "Provider", value: config?.llm_model_credential?.provider },
+              { label: "API Key", value: config?.llm_model_credential?.api_key, mono: true },
+              { label: "Description", value: config?.llm_model_credential?.description },
+            ]}
+          />
+
+          <ConfigCard
+            title="Embedding Credential"
+            subtitle={config?.embedding_model_credential?.name}
+            editable={false}
+            fields={[
+              { label: "Provider", value: config?.embedding_model_credential?.provider },
+              { label: "API Key", value: config?.embedding_model_credential?.api_key, mono: true },
+              { label: "Description", value: config?.embedding_model_credential?.description },
+            ]}
+          />
+
+          <ConfigCard
+            title="Sparse Credential"
+            subtitle={config?.sparse_text_model_credential?.name}
+            editable={false}
+            fields={[
+              { label: "Provider", value: config?.sparse_text_model_credential?.provider },
+              {
+                label: "API Key",
+                value: config?.sparse_text_model_credential?.api_key,
+                mono: true,
+              },
+              { label: "Description", value: config?.sparse_text_model_credential?.description },
+            ]}
+          />
+
+          <ConfigCard
+            title="Reranker Credential"
+            subtitle={config?.reranker_model_credential?.name}
+            editable={false}
+            fields={[
+              { label: "Provider", value: config?.reranker_model_credential?.provider },
+              { label: "API Key", value: config?.reranker_model_credential?.api_key, mono: true },
+              { label: "Description", value: config?.reranker_model_credential?.description },
+            ]}
+          />
+
+          <ConfigCard
+            title="OCR Credential"
+            subtitle={config?.ocr_model_credential?.name}
+            editable={false}
+            fields={[
+              { label: "Provider", value: config?.ocr_model_credential?.provider },
+              { label: "API Key", value: config?.ocr_model_credential?.api_key, mono: true },
+              { label: "Description", value: config?.ocr_model_credential?.description },
+            ]}
+          />
+
+          <ConfigCard
+            title="Audio Credential"
+            subtitle={config?.audio_model_credential?.name}
+            editable={false}
+            fields={[
+              { label: "Provider", value: config?.audio_model_credential?.provider },
+              { label: "API Key", value: config?.audio_model_credential?.api_key, mono: true },
+              { label: "Description", value: config?.audio_model_credential?.description },
+            ]}
+          />
+
+          <ConfigCard
+            title="Video Credential"
+            subtitle={config?.video_model_credential?.name}
+            editable={false}
+            fields={[
+              { label: "Provider", value: config?.video_model_credential?.provider },
+              { label: "API Key", value: config?.video_model_credential?.api_key, mono: true },
+              { label: "Description", value: config?.video_model_credential?.description },
+            ]}
+          />
+        </div>
       </div>
 
       <UpdateModelModal
@@ -528,7 +635,7 @@ function ConfigTab({ orgId, projectId }: ConfigTabProps) {
         projectId={projectId}
         configId={config?.id}
       />
-    </>
+    </div>
   );
 }
 

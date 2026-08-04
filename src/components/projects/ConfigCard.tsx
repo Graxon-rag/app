@@ -16,7 +16,7 @@ interface ConfigCardProps {
 }
 
 function ConfigCard({ title, subtitle, fields, editable, onEdit }: ConfigCardProps) {
-  // Default to open if there are fields (to match your screenshot's expanded state)
+  // Default to open to match the expanded state in the screenshot
   const [open, setOpen] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
