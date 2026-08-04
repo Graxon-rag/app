@@ -16,8 +16,8 @@ interface ConfigCardProps {
 }
 
 function ConfigCard({ title, subtitle, fields, editable, onEdit }: ConfigCardProps) {
-  // Default to open to match the expanded state in the screenshot
-  const [open, setOpen] = useState(true);
+  // Now defaulting to false (collapsed) per your request
+  const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -61,7 +61,7 @@ function ConfigCard({ title, subtitle, fields, editable, onEdit }: ConfigCardPro
                   e.stopPropagation();
                   setMenuOpen((prev) => !prev);
                 }}
-                className="p-1.5 rounded-md text-zinc-400 hover:text-black dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+                className="p-1.5 rounded-md cursor-pointer text-zinc-400 hover:text-black dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
               >
                 <MoreVertical className="w-4 h-4" />
               </button>
@@ -74,7 +74,7 @@ function ConfigCard({ title, subtitle, fields, editable, onEdit }: ConfigCardPro
                       setMenuOpen(false);
                       if (onEdit) onEdit();
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition text-left"
+                    className="w-full flex cursor-pointer items-center gap-2 px-3 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition text-left"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
                     Edit
@@ -104,7 +104,10 @@ function ConfigCard({ title, subtitle, fields, editable, onEdit }: ConfigCardPro
       {open && (
         <div className="px-4 pb-4 pt-2 border-t border-zinc-100 dark:border-zinc-800/80 divide-y divide-zinc-100 dark:divide-zinc-800/40 rounded-b-xl">
           {fields.map((field, i) => (
-            <div key={i} className="grid grid-cols-[120px_1fr] gap-4 py-2.5 text-[13px]">
+            <div
+              key={i}
+              className="grid grid-cols-[120px_1fr] gap-4 py-2.5 text-[13px] items-center"
+            >
               <span className="text-zinc-500 font-medium">{field.label}</span>
               <span
                 className={`text-zinc-800 dark:text-zinc-300 text-left break-words leading-relaxed ${

@@ -226,7 +226,7 @@ function UpdateModelModal({
       case "reranker":
         payload.reranker_model_id = modelId;
         payload.reranker_model_credential_id = credentialId || null;
-        payload.reranker_enable = true;
+        payload.reranker_enable = true; // Auto-enables if not previously enabled
         break;
       case "ocr":
         payload.ocr_model_id = modelId;
@@ -402,17 +402,17 @@ function UpdateModelModal({
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 function ConfigTab({ orgId, projectId }: ConfigTabProps) {
-  const { getProjectConfigDetailsByProject } = useProjectStore();
+  const { getProjectConfigDetailsByProject, updateProjectConfig } = useProjectStore();
 
   const [config, setConfig] = useState<ProjectConfigDetailInterface | null>(null);
   const [loading, setLoading] = useState(true);
+  const [togglingTag, setTogglingTag] = useState(false);
   const [editingType, setEditingType] = useState<EditableModelType | null>(null);
 
   const fetchConfig = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getProjectConfigDetailsByProject(orgId, projectId);
-      // Handles both direct object return or wrapped inside { data }
       setConfig((data as any).data || data);
     } catch (error) {
       console.error("Failed to fetch project config details", error);
@@ -425,7 +425,22 @@ function ConfigTab({ orgId, projectId }: ConfigTabProps) {
     fetchConfig();
   }, [fetchConfig]);
 
-  if (loading) {
+  const handleToggleTagExtraction = async () => {
+    if (!config || togglingTag) return;
+    setTogglingTag(true);
+    try {
+      await updateProjectConfig(orgId, projectId, config.id, {
+        llm_tag_extraction_enable: !config.llm_tag_extraction_enable,
+      });
+      await fetchConfig();
+    } catch (error) {
+      console.error("Failed to toggle tag extraction", error);
+    } finally {
+      setTogglingTag(false);
+    }
+  };
+
+  if (loading && !config) {
     return (
       <div className="flex items-center justify-center py-20 text-zinc-500">
         <Loader2 className="w-6 h-6 animate-spin" />
@@ -443,6 +458,66 @@ function ConfigTab({ orgId, projectId }: ConfigTabProps) {
 
   return (
     <div className="pb-10">
+      {/* Pipeline Features Section */}
+      <div className="mb-6">
+        <h3 className="text-sm font-medium text-black dark:text-white mb-4">Pipeline Settings</h3>
+        <div className="grid md:grid-cols-2 gap-4 items-start">
+          <ConfigCard
+            title="Features Enabled"
+            subtitle="Core project pipeline flags"
+            editable={false}
+            fields={[
+              {
+                label: "Graph DB",
+                value: config.graph_db_enable ? "Enabled" : "Disabled",
+              },
+              {
+                label: "Sparse Embeddings",
+                value: config.sparse_embedding_enable ? "Enabled" : "Disabled",
+              },
+              {
+                label: "Reranker",
+                value: config.reranker_enable ? "Enabled" : "Disabled",
+              },
+              {
+                label: "Tag Extraction",
+                value: (
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={
+                        config.llm_tag_extraction_enable
+                          ? "text-black dark:text-white"
+                          : "text-zinc-500"
+                      }
+                    >
+                      {config.llm_tag_extraction_enable ? "Enabled" : "Disabled"}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={togglingTag}
+                      onClick={handleToggleTagExtraction}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                        config.llm_tag_extraction_enable
+                          ? "bg-black dark:bg-white"
+                          : "bg-zinc-300 dark:bg-zinc-700"
+                      } ${togglingTag ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-black transition-transform ${
+                          config.llm_tag_extraction_enable
+                            ? "translate-x-4.5 translate-x-[18px]"
+                            : "translate-x-0.5"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                ),
+              },
+            ]}
+          />
+        </div>
+      </div>
+
       {/* Models Section */}
       <div className="mb-6">
         <h3 className="text-sm font-medium text-black dark:text-white mb-4">Pipeline Models</h3>

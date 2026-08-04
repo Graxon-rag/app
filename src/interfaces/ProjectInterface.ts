@@ -127,6 +127,10 @@ export interface ProjectConfigUpdateInterface {
 //   "data": {
 //     "id": "0899aa88-6709-41f6-af2a-cd0a244dccac",
 //     "project_id": "85860c1a-7aa9-4d5a-bb90-6f96caa1341c",
+//     "graph_db_enable": true,
+//     "sparse_embedding_enable": true,
+//     "llm_tag_extraction_enable": true,
+//     "reranker_enable": true,
 //     "llm_model": {
 //       "id": "1512cea1-582f-408f-a3cd-ad54bfabc5f6",
 //       "org_id": "dev",
@@ -274,6 +278,12 @@ export interface ProjectConfigUpdateInterface {
 export interface ProjectConfigDetailInterface {
   id: string;
   project_id: string;
+
+  graph_db_enable: boolean;
+  sparse_embedding_enable: boolean;
+  llm_tag_extraction_enable: boolean;
+  reranker_enable: boolean;
+
   llm_model: LLMModelInterface;
   llm_model_credential: ModelCredentialInterface;
 
