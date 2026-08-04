@@ -10,6 +10,7 @@ import { useVideoModelStore } from "@/store/videoModelStore";
 import { useModelCredentialStore } from "@/store/modelCredentialStore";
 import { useModelProviderStore } from "@/store/modelProviderStore";
 import { useProjectStore } from "@/store/projectStore";
+import { TriangleAlert } from "lucide-react";
 
 // ─── types ──────────────────────────────────────────────────────────────────
 type ProviderType = "local" | "cloud";
@@ -380,10 +381,10 @@ export default function CreateProjectIndex() {
   const [description, setDescription] = useState("");
 
   // ── locked-at-creation toggles ────────────────────────────────────────
-  const [graphDbEnable, setGraphDbEnable] = useState(false);
-  const [sparseEmbeddingEnable, setSparseEmbeddingEnable] = useState(false);
-  const [rerankerEnable, setRerankerEnable] = useState(false);
-  const [llmTagExtractionEnable, setLlmTagExtractionEnable] = useState(false);
+  const [graphDbEnable, setGraphDbEnable] = useState(true);
+  const [sparseEmbeddingEnable, setSparseEmbeddingEnable] = useState(true);
+  const [rerankerEnable, setRerankerEnable] = useState(true);
+  const [llmTagExtractionEnable, setLlmTagExtractionEnable] = useState(true);
 
   // ── provider option lists ─────────────────────────────────────────────
   const [llmProviders, setLlmProviders] = useState<string[]>([]);
@@ -738,7 +739,7 @@ export default function CreateProjectIndex() {
 
         {/* Locked-at-creation toggles */}
         <div className={CARD}>
-          <SectionHeading dot="bg-red-500" title="Pipeline settings" pill="locked after creation" />
+          <SectionHeading dot="bg-red-500" title="Pipeline settings" />
           <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
             <Toggle
               checked={graphDbEnable}
@@ -746,6 +747,14 @@ export default function CreateProjectIndex() {
               label="Graph database"
               description="Build a knowledge graph alongside vector storage for this project."
             />
+            {!graphDbEnable && (
+              <div className="mt-2 flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-3 text-yellow-700">
+                <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-yellow-600" />
+                <p className="text-sm font-medium">
+                  Warning: Graph Database cannot be enabled after the project is created.
+                </p>
+              </div>
+            )}
             <Toggle
               checked={sparseEmbeddingEnable}
               onChange={(v) => {
@@ -760,6 +769,14 @@ export default function CreateProjectIndex() {
               label="Sparse embeddings"
               description="Enable keyword-style sparse vectors alongside dense embeddings."
             />
+            {!sparseEmbeddingEnable && (
+              <div className="mt-2 flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-3 text-yellow-700">
+                <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-yellow-600" />
+                <p className="text-sm font-medium">
+                  Warning: Sparse Embeddings cannot be enabled after the project is created.
+                </p>
+              </div>
+            )}
             <Toggle
               checked={rerankerEnable}
               onChange={(v) => {
@@ -841,9 +858,12 @@ export default function CreateProjectIndex() {
               </div>
             </div>
           )}
-          <p className="text-[11px] text-zinc-500 mt-2">
-            Note: the embedding model can't be changed once the project is created.
-          </p>
+          <div className="mt-2 flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-1 text-yellow-700">
+            <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600" />
+            <p className="text-sm font-medium">
+              Note: The embedding model can't be changed once the project is created.
+            </p>
+          </div>
         </div>
 
         {/* Sparse model */}
