@@ -5,19 +5,19 @@ export type DocumentCategory = "text" | "image" | "audio" | "video";
 
 // --- Extension groups -------------------------------------------------
 
-const PLAIN_TEXT_EXTENSIONS = [".txt", ".md", ".markdown"];
+export const PLAIN_TEXT_EXTENSIONS = [".txt", ".md", ".markdown"];
 
-const DOCUMENT_EXTENSIONS = [".pdf", ".doc", ".docx"];
+export const DOCUMENT_EXTENSIONS = [".pdf", ".doc", ".docx"];
 
-const SPREADSHEET_EXTENSIONS = [".xls", ".xlsx", ".xlsm", ".csv"];
+export const SPREADSHEET_EXTENSIONS = [".xls", ".xlsx", ".xlsm", ".csv"];
 
-const PRESENTATION_EXTENSIONS = [".ppt", ".pptx"];
+export const PRESENTATION_EXTENSIONS = [".ppt", ".pptx"];
 
-const STRUCTURED_DATA_EXTENSIONS = [".json", ".xml", ".yaml", ".yml"];
+export const STRUCTURED_DATA_EXTENSIONS = [".json", ".xml", ".yaml", ".yml"];
 
-const MARKUP_EXTENSIONS = [".html", ".htm"];
+export const MARKUP_EXTENSIONS = [".html", ".htm"];
 
-const CODE_EXTENSIONS = [
+export const CODE_EXTENSIONS = [
   ".js",
   ".jsx",
   ".ts",
@@ -54,7 +54,7 @@ const CODE_EXTENSIONS = [
   ".svelte",
 ];
 
-const IMAGE_EXTENSIONS = [
+export const IMAGE_EXTENSIONS = [
   ".jpg",
   ".jpeg",
   ".png",
@@ -68,9 +68,9 @@ const IMAGE_EXTENSIONS = [
   ".heif",
 ];
 
-const AUDIO_EXTENSIONS = [".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg", ".wma"];
+export const AUDIO_EXTENSIONS = [".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg", ".wma"];
 
-const VIDEO_EXTENSIONS = [".mp4", ".mov", ".avi", ".mkv", ".webm", ".flv", ".wmv", ".m4v"];
+export const VIDEO_EXTENSIONS = [".mp4", ".mov", ".avi", ".mkv", ".webm", ".flv", ".wmv", ".m4v"];
 
 // Anything that isn't audio/video/image is treated as "text" for
 // processor-routing purposes (pdf, docx, xlsx, code, json, etc all end

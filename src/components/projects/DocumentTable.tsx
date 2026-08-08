@@ -1,8 +1,74 @@
 import React, { useEffect, useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Check, Copy, MoreVertical } from "lucide-react";
+import {
+  Check,
+  Copy,
+  MoreVertical,
+  FileText,
+  FileSpreadsheet,
+  Presentation,
+  FileJson,
+  FileCode,
+  FileAudio,
+  FileVideo,
+  Image as ImageIcon,
+  File,
+} from "lucide-react";
 import { useDocumentStore } from "@/store/documentStore";
 import { DocumentInterface } from "@/interfaces/DocumentInterface";
+
+import {
+  PLAIN_TEXT_EXTENSIONS,
+  DOCUMENT_EXTENSIONS,
+  SPREADSHEET_EXTENSIONS,
+  PRESENTATION_EXTENSIONS,
+  STRUCTURED_DATA_EXTENSIONS,
+  MARKUP_EXTENSIONS,
+  CODE_EXTENSIONS,
+  IMAGE_EXTENSIONS,
+  AUDIO_EXTENSIONS,
+  VIDEO_EXTENSIONS,
+} from "@/libs/documentTypes";
+
+// Helper function to get the appropriate icon based on filename
+const getFileIcon = (filename: string) => {
+  const ext = filename.slice(filename.lastIndexOf(".")).toLowerCase();
+
+  if (DOCUMENT_EXTENSIONS.includes(ext)) {
+    // Coloring PDF red and Word docs blue for better distinction
+    const isPdf = ext === ".pdf";
+    return <FileText size={16} className={isPdf ? "text-red-500" : "text-blue-500"} />;
+  }
+  if (PLAIN_TEXT_EXTENSIONS.includes(ext)) {
+    return <FileText size={16} className="text-zinc-400" />;
+  }
+  if (SPREADSHEET_EXTENSIONS.includes(ext)) {
+    return <FileSpreadsheet size={16} className="text-green-500" />;
+  }
+  if (PRESENTATION_EXTENSIONS.includes(ext)) {
+    return <Presentation size={16} className="text-orange-500" />;
+  }
+  if (STRUCTURED_DATA_EXTENSIONS.includes(ext)) {
+    return <FileJson size={16} className="text-yellow-500" />;
+  }
+  if (CODE_EXTENSIONS.includes(ext) || MARKUP_EXTENSIONS.includes(ext)) {
+    return <FileCode size={16} className="text-purple-500" />;
+  }
+  if (IMAGE_EXTENSIONS.includes(ext)) {
+    return <ImageIcon size={16} className="text-emerald-500" />;
+  }
+
+  // --- NEW: Audio and Video Checks ---
+  if (AUDIO_EXTENSIONS.includes(ext)) {
+    return <FileAudio size={16} className="text-pink-500" />;
+  }
+  if (VIDEO_EXTENSIONS.includes(ext)) {
+    return <FileVideo size={16} className="text-indigo-500" />;
+  }
+
+  // Default icon
+  return <File size={16} className="text-zinc-400" />;
+};
 
 function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string }) {
   const { documents, getAllDocuments, deleteDocument, getPresignedUrl, submitForProcessDocument } =
@@ -16,7 +82,6 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
 
   const handleView = async (doc: DocumentInterface) => {
     const url = `/organizations/${orgId}/projects/${projectId}/docs/${doc.id}/view`;
-
     if (url) window.open(url, "_blank");
   };
 
@@ -29,6 +94,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
     const url = `/organizations/${orgId}/projects/${projectId}/docs/${documentId}/query`;
     window.open(url, "_blank");
   };
+
   const handleDelete = async (doc: DocumentInterface) => {
     if (!confirm("Delete this document?")) return;
     await deleteDocument(orgId, projectId, doc.id);
@@ -43,6 +109,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
       console.log(error);
     }
   };
+
   const getStatusStyles = (status: string) => {
     switch (status) {
       case "PENDING":
@@ -59,6 +126,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
         return "bg-zinc-500 text-white";
     }
   };
+
   const formatBytes = (bytes?: number) => {
     if (bytes === undefined || bytes === null) return "Null";
     if (bytes === 0) return "0 Bytes";
@@ -114,9 +182,14 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                 </button>
               </td>
 
+              {/* Name Column with File Icon */}
               <td className="p-3" title={doc.name}>
-                {doc.name.length > 20 ? `${doc.name.slice(0, 20)}...` : doc.name}
+                <div className="flex items-center gap-2">
+                  {getFileIcon(doc.name)}
+                  <span>{doc.name.length > 20 ? `${doc.name.slice(0, 20)}...` : doc.name}</span>
+                </div>
               </td>
+
               <td className="p-3">{doc.type}</td>
               <td className="p-3 text-zinc-500">{formatBytes(doc.size)}</td>
 
