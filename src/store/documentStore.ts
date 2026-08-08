@@ -47,6 +47,7 @@ interface DocumentStore {
     fileName: string,
     fileSize: number | null,
     parts: { etag: string; part_number: number }[],
+    isOCRNeeded: boolean,
   ) => Promise<boolean>;
 }
 
@@ -178,6 +179,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
     fileName,
     fileSize,
     parts,
+    isOCRNeeded,
   ) => {
     try {
       const url = `/api/documents/${orgId}/projects/${projectId}/upload/multipart/${documentId}/complete`;
@@ -186,6 +188,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
         key,
         file_name: fileName,
         size: fileSize,
+        is_ocr_needed: isOCRNeeded,
         parts,
       });
       return !!response.data?.data;
