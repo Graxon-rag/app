@@ -423,7 +423,7 @@ export function DocumentUpload({ orgId, projectId }: { orgId: string; projectId:
                     type="button"
                     onClick={handleComplete}
                     disabled={status === "completing"}
-                    className="px-5 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition shadow-sm disabled:opacity-70 flex items-center gap-2"
+                    className="px-5 py-2 text-sm cursor-pointer font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition shadow-sm disabled:opacity-70 flex items-center gap-2"
                   >
                     {status === "completing" ? (
                       <>

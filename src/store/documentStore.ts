@@ -116,7 +116,11 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
       const response = await axiosClient.get(url);
       const data = response.data ?? null;
 
-      return data;
+      // console.log(data);
+
+      const signedUrl = data?.data?.signed_url ?? null;
+
+      return signedUrl;
     } catch (error) {
       console.log(error);
     }
