@@ -38,7 +38,7 @@ function ConfigCard({ title, subtitle, fields, editable, onEdit }: ConfigCardPro
 
   return (
     <div className="self-start rounded-xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-[#121214] shadow-sm overflow-visible transition">
-      <div className="flex  items-center justify-between p-4 transition rounded-t-xl hover:bg-zinc-50 dark:hover:bg-white/[0.02]">
+      <div className="flex items-center justify-between p-4 transition rounded-t-xl hover:bg-zinc-50 dark:hover:bg-white/[0.02]">
         {/* Clickable Accordion Area */}
         <button
           type="button"

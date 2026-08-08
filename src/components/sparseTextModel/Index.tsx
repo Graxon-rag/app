@@ -143,8 +143,9 @@ function SparseTextModelIndex() {
               <div className="space-y-3">
                 <div className="flex items-start justify-between">
                   <div>
+                    <h2 className="text-xs mb-2">ID: {model.id}</h2>
                     <h2 className="font-medium ">{model.name}</h2>
-                    <p className="text-xs font-mono mt-1">ID: {model.model_id}</p>
+                    <p className="text-sm mt-1">Model ID: {model.model_id}</p>
                   </div>
 
                   <button

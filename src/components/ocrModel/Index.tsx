@@ -116,8 +116,9 @@ function OCRModelIndex() {
             >
               <div className="flex justify-between">
                 <div>
+                  <h2 className="text-xs mb-2">ID: {model.id}</h2>
                   <h2 className="font-medium">{model.name}</h2>
-                  <p className="text-xs text-zinc-400">{model.model_id}</p>
+                  <p className="text-sm text-zinc-400">Model ID: {model.model_id}</p>
                 </div>
 
                 <button onClick={() => setConfirmDelete(model.id)} className="text-red-500">
@@ -130,7 +131,7 @@ function OCRModelIndex() {
                   <b>Provider:</b> {model.provider}
                 </p>
                 <p>
-                  <b>Model:</b> {model.model_name}
+                  <b>Model Name:</b> {model.model_name}
                 </p>
               </div>
 

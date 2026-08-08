@@ -486,7 +486,8 @@ function ConfigTab({ orgId, projectId }: ConfigTabProps) {
     <div className="pb-10">
       {/* Pipeline Features Section */}
       <div className="mb-6">
-        <h3 className="text-sm font-medium text-black dark:text-white mb-4">Pipeline Settings</h3>
+        <h1 className="mb-4">Config ID: {config?.id}</h1>
+        <h3 className="text-sm font-medium text-black dark:text-white mb-4">Pipeline Config</h3>
         <div className="grid md:grid-cols-2 gap-4 items-start">
           <ConfigCard
             title="Features Enabled"
@@ -675,6 +676,7 @@ function ConfigTab({ orgId, projectId }: ConfigTabProps) {
             subtitle={config?.llm_model_credential?.name}
             editable={false}
             fields={[
+              { label: "ID", value: config?.llm_model_credential?.id },
               { label: "Provider", value: config?.llm_model_credential?.provider },
               { label: "API Key", value: config?.llm_model_credential?.api_key, mono: true },
               { label: "Description", value: config?.llm_model_credential?.description },
@@ -686,6 +688,7 @@ function ConfigTab({ orgId, projectId }: ConfigTabProps) {
             subtitle={config?.embedding_model_credential?.name}
             editable={false}
             fields={[
+              { label: "ID", value: config?.embedding_model_credential?.id },
               { label: "Provider", value: config?.embedding_model_credential?.provider },
               { label: "API Key", value: config?.embedding_model_credential?.api_key, mono: true },
               { label: "Description", value: config?.embedding_model_credential?.description },
@@ -697,6 +700,7 @@ function ConfigTab({ orgId, projectId }: ConfigTabProps) {
             subtitle={config?.sparse_text_model_credential?.name}
             editable={false}
             fields={[
+              { label: "ID", value: config?.sparse_text_model_credential?.id },
               { label: "Provider", value: config?.sparse_text_model_credential?.provider },
               {
                 label: "API Key",
@@ -712,6 +716,7 @@ function ConfigTab({ orgId, projectId }: ConfigTabProps) {
             subtitle={config?.reranker_model_credential?.name}
             editable={false}
             fields={[
+              { label: "ID", value: config?.reranker_model_credential?.id },
               { label: "Provider", value: config?.reranker_model_credential?.provider },
               { label: "API Key", value: config?.reranker_model_credential?.api_key, mono: true },
               { label: "Description", value: config?.reranker_model_credential?.description },
@@ -723,6 +728,7 @@ function ConfigTab({ orgId, projectId }: ConfigTabProps) {
             subtitle={config?.ocr_model_credential?.name}
             editable={false}
             fields={[
+              { label: "ID", value: config?.ocr_model_credential?.id },
               { label: "Provider", value: config?.ocr_model_credential?.provider },
               { label: "API Key", value: config?.ocr_model_credential?.api_key, mono: true },
               { label: "Description", value: config?.ocr_model_credential?.description },
@@ -734,6 +740,7 @@ function ConfigTab({ orgId, projectId }: ConfigTabProps) {
             subtitle={config?.audio_model_credential?.name}
             editable={false}
             fields={[
+              { label: "ID", value: config?.audio_model_credential?.id },
               { label: "Provider", value: config?.audio_model_credential?.provider },
               { label: "API Key", value: config?.audio_model_credential?.api_key, mono: true },
               { label: "Description", value: config?.audio_model_credential?.description },
@@ -745,6 +752,7 @@ function ConfigTab({ orgId, projectId }: ConfigTabProps) {
             subtitle={config?.video_model_credential?.name}
             editable={false}
             fields={[
+              { label: "ID", value: config?.video_model_credential?.id },
               { label: "Provider", value: config?.video_model_credential?.provider },
               { label: "API Key", value: config?.video_model_credential?.api_key, mono: true },
               { label: "Description", value: config?.video_model_credential?.description },

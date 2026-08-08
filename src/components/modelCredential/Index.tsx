@@ -263,6 +263,12 @@ function ModelCredentialIndex() {
               </div>
 
               <div className="text-sm text-zinc-600 dark:text-zinc-300 space-y-2 mb-4 bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg flex-1">
+                <div className="flex flex-col mb-3 gap-1">
+                  <span className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
+                    ID
+                  </span>
+                  <span className="font-mono text-xs break-all">{cred.id}</span>
+                </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
                     API Key
