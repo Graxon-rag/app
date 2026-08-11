@@ -63,7 +63,7 @@ function DocumentViewerPage() {
   }
 
   return (
-    <div className="mx-auto p-6">
+    <div className="mx-auto">
       <DocumentViewerComponent url={presignedUrl} fileName={doc.name} />
     </div>
   );

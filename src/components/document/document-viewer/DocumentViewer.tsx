@@ -12,25 +12,23 @@ import { MarkdownViewer } from "./viewers/MarkdownViewer";
 import { HtmlViewer } from "./viewers/HtmlViewer";
 import { TextViewer } from "./viewers/TextViewer";
 import { UnsupportedViewer } from "./viewers/UnsupportedViewer";
+import { useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
-/**
- * Fetches nothing itself — takes a presigned URL + file name and mounts
- * the right inline preview widget for it. Usage:
- *
- *   <DocumentViewer url={presignedUrl} fileName={doc.fileName} />
- *
- * For doc/docx/ppt/pptx, pass `publiclyFetchable` only if the presigned
- * URL is reachable by Microsoft/Google's servers (not IP-restricted,
- * won't expire in the next minute) — otherwise those degrade to a
- * download-only card rather than a broken embed.
- */
 export default function DocumentViewer({
   url,
   fileName,
   publiclyFetchable = false,
   className,
 }: DocumentViewerProps) {
+  const { org_id, project_id } = useParams();
+  const navigate = useNavigate();
+
   const kind = getViewerKind(fileName);
+
+  const handleBack = () => {
+    navigate(`/organizations/${org_id}/projects/${project_id}?tab=documents`);
+  };
 
   const content = (() => {
     console.log("file Kind", kind);
@@ -38,31 +36,54 @@ export default function DocumentViewer({
     switch (kind) {
       case "image":
         return <ImageViewer url={url} fileName={fileName} />;
+
       case "audio":
         return <AudioViewer url={url} fileName={fileName} />;
+
       case "video":
         return <VideoViewer url={url} fileName={fileName} />;
+
       case "pdf":
         return <PdfViewer url={url} fileName={fileName} />;
+
       case "office":
         publiclyFetchable = true;
         return <OfficeViewer url={url} fileName={fileName} publiclyFetchable={publiclyFetchable} />;
+
       case "spreadsheet":
         return <SpreadsheetViewer url={url} fileName={fileName} />;
+
       case "json":
         return <JsonViewer url={url} fileName={fileName} />;
+
       case "code":
         return <CodeViewer url={url} fileName={fileName} />;
+
       case "markdown":
         return <MarkdownViewer url={url} fileName={fileName} />;
+
       case "html":
         return <HtmlViewer url={url} fileName={fileName} />;
+
       case "text":
         return <TextViewer url={url} fileName={fileName} />;
+
       default:
         return <UnsupportedViewer url={url} fileName={fileName} />;
     }
   })();
 
-  return <div className={className}>{content}</div>;
+  return (
+    <div className={className}>
+      <button
+        type="button"
+        onClick={handleBack}
+        className="mb-4 inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium cursor-pointer text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
+      >
+        <ArrowLeft className="h-4 w-4" strokeWidth={2} /> Back to Documents
+      </button>
+
+      {content}
+    </div>
+  );
 }

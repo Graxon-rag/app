@@ -29,6 +29,7 @@ import {
   AUDIO_EXTENSIONS,
   VIDEO_EXTENSIONS,
 } from "@/libs/documentTypes";
+import { useNavigate } from "react-router-dom";
 
 // Helper function to get the appropriate icon based on filename
 const getFileIcon = (filename: string) => {
@@ -71,6 +72,7 @@ const getFileIcon = (filename: string) => {
 };
 
 function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string }) {
+  const navigate = useNavigate();
   const { documents, getAllDocuments, deleteDocument, getPresignedUrl, submitForProcessDocument } =
     useDocumentStore();
 
@@ -82,7 +84,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
 
   const handleView = async (doc: DocumentInterface) => {
     const url = `/organizations/${orgId}/projects/${projectId}/docs/${doc.id}/view`;
-    if (url) window.open(url, "_blank");
+    navigate(url);
   };
 
   const handleObjectView = (doc: DocumentInterface) => {
