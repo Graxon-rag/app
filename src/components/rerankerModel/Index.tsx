@@ -68,7 +68,7 @@ function ReRankerModelIndex() {
   const isEmpty = !filteredModels || filteredModels.length === 0;
 
   return (
-    <div className="space-y-6 max-w-[1450px] mx-auto">
+    <div className="space-y-6 max-w-[95%] mx-auto">
       {/* Header & Controls */}
       <h1 className="text-xl font-semibold">Re-Ranker Models</h1>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

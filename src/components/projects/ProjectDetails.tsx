@@ -73,7 +73,7 @@ function ProjectDetails() {
   );
 
   return (
-    <div className="space-y-6 max-w-[1700px] mx-auto">
+    <div className="space-y-6 max-w-[95%] mx-auto">
       {/* TABS */}
       <div className="space-y-4">
         <div className="flex gap-2 border-b dark:border-zinc-800">

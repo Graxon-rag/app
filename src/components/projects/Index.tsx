@@ -19,7 +19,7 @@ function ProjectIndex() {
   const isEmpty = !projects || projects.length === 0;
 
   return (
-    <div className="space-y-6 max-w-[1450px] mx-auto">
+    <div className="space-y-6 max-w-[95%] mx-auto">
       {/* HEADER */}
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold">Projects</h1>

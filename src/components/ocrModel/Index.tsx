@@ -52,7 +52,7 @@ function OCRModelIndex() {
   const isEmpty = !ocrModels || ocrModels.length === 0;
 
   return (
-    <div className="space-y-6 max-w-[1450px] mx-auto">
+    <div className="space-y-6 max-w-[95%] mx-auto">
       {/* HEADER */}
       <h1 className="text-xl font-semibold">OCR Models</h1>
 
