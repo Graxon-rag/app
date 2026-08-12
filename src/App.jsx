@@ -5,6 +5,7 @@ import Home from "@/pages/Home";
 import Organizations from "@/pages/Organizations";
 import Layout from "@/components/layout/Layout";
 import Loader from "@/components/Loader";
+import { Toaster } from "react-hot-toast";
 
 const OrgLayout = lazy(() => import("@/pages/org/OrgLayout"));
 const Projects = lazy(() => import("@/pages/org/Projects"));
@@ -49,6 +50,16 @@ export default function App() {
           </Route>
         </Routes>
       </Suspense>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: "#333",
+            color: "#fff",
+          },
+        }}
+      />
     </ThemeProvider>
   );
 }

@@ -105,7 +105,8 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
 
   const handleProcess = async (doc: DocumentInterface) => {
     try {
-      await submitForProcessDocument(orgId, projectId, doc.id);
+      const response = await submitForProcessDocument(orgId, projectId, doc.id);
+      if (response === false) return;
       alert("Submitted for processing");
     } catch (error) {
       console.log(error);
@@ -218,14 +219,22 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                     className="z-50 min-w-[160px] rounded-lg border bg-white dark:bg-zinc-900 dark:border-zinc-800 shadow-md p-1"
                   >
                     {/* PROCESS */}
-                    {doc.status === "PENDING" && (
+
+                    <DropdownMenu.Item
+                      onClick={() => handleProcess(doc)}
+                      className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none"
+                    >
+                      Process
+                    </DropdownMenu.Item>
+
+                    {/* {doc.status === "PENDING" && (
                       <DropdownMenu.Item
                         onClick={() => handleProcess(doc)}
                         className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none"
                       >
                         Process
                       </DropdownMenu.Item>
-                    )}
+                    )} */}
                     {doc.status === "FAILED" && (
                       <DropdownMenu.Item
                         onClick={() => handleProcess(doc)}

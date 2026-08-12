@@ -6,11 +6,13 @@ import {
   ScanText,
   FileText,
   AlertCircle,
+  Mic,
+  Film,
 } from "lucide-react";
 import axios from "axios";
 import { useDocumentStore } from "@/store/documentStore";
 import { useMultipartUploadStore } from "@/store/multipartStore";
-import { useProjectStore } from "@/store/projectStore"; // Added project store import
+import { useProjectStore } from "@/store/projectStore";
 import {
   FILE_INPUT_ACCEPT,
   isAllowedFile,
@@ -32,6 +34,8 @@ type PendingUpload = {
   category: DocumentCategory;
   ocrCandidate: boolean;
   useOcr: boolean;
+  useAudioTranscription: boolean;
+  useVideoTranscription: boolean;
 };
 
 const CATEGORY_LABEL: Record<DocumentCategory, string> = {
@@ -48,8 +52,8 @@ function sanitizeFileName(name: string): string {
   if (lastDot === -1) {
     return name
       .trim()
-      .replace(/[^a-zA-Z0-9]+/g, "_") // Replaces spaces, special chars, and multiple ___ with a single _
-      .replace(/^_+|_+$/g, ""); // Removes trailing or leading underscores
+      .replace(/[^a-zA-Z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
   }
 
   const baseName = name.substring(0, lastDot);
@@ -57,14 +61,14 @@ function sanitizeFileName(name: string): string {
 
   const cleanBase = baseName
     .trim()
-    .replace(/[^a-zA-Z0-9]+/g, "_") // Squashes double spaces or double __ into a single _
-    .replace(/^_+|_+$/g, ""); // Cleans up _ at the very start or end
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
 
-  // If the filename becomes empty after cleaning (e.g., "___ .pdf"), give it a fallback name
   const finalBase = cleanBase.length > 0 ? cleanBase : "document";
 
   return `${finalBase}${ext}`;
 }
+
 export function DocumentUpload({ orgId, projectId }: { orgId: string; projectId: string }) {
   const { getAllDocuments, initMultipartUpload, getPresignedPartUrl, completeMultipartUpload } =
     useDocumentStore();
@@ -78,10 +82,10 @@ export function DocumentUpload({ orgId, projectId }: { orgId: string; projectId:
   const [progress, setProgress] = useState(0);
   const [pending, setPending] = useState<PendingUpload | null>(null);
 
-  // Track project configuration for OCR validation
+  // Track project configuration for OCR/Audio/Video validation
   const [projectConfig, setProjectConfig] = useState<any | null>(null);
 
-  // Fetch project config to verify if OCR model is available
+  // Fetch project config to verify if models are available
   useEffect(() => {
     let isMounted = true;
     const fetchConfig = async () => {
@@ -99,6 +103,8 @@ export function DocumentUpload({ orgId, projectId }: { orgId: string; projectId:
   }, [projectId, getProjectConfigDetailsByProject]);
 
   const hasOcrModel = !!projectConfig?.ocr_model;
+  const hasAudioModel = !!projectConfig?.audio_model;
+  const hasVideoModel = !!projectConfig?.video_model;
 
   const reset = () => {
     setStatus("idle");
@@ -195,6 +201,8 @@ export function DocumentUpload({ orgId, projectId }: { orgId: string; projectId:
         category,
         ocrCandidate,
         useOcr: false,
+        useAudioTranscription: false,
+        useVideoTranscription: false,
       });
       setStatus("ready_to_complete");
     } catch (err) {
@@ -221,6 +229,9 @@ export function DocumentUpload({ orgId, projectId }: { orgId: string; projectId:
         pending.file.size,
         pending.completedParts,
         pending.useOcr,
+        // TODO: Update your completeMultipartUpload function signature to accept these if needed
+        // pending.useAudioTranscription,
+        // pending.useVideoTranscription
       );
 
       if (!success) {
@@ -243,16 +254,18 @@ export function DocumentUpload({ orgId, projectId }: { orgId: string; projectId:
     if (!e.target.files?.length) return;
     await handleFile(e.target.files[0]);
   };
-
-  const handleDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDragActive(false);
-    if (e.dataTransfer.files?.length) {
-      await handleFile(e.dataTransfer.files[0]);
-    }
-  }, []);
-
   const inputDisabled = status !== "idle";
+
+  const handleDrop = useCallback(
+    async (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setDragActive(false);
+      if (e.dataTransfer.files?.length) {
+        await handleFile(e.dataTransfer.files[0]);
+      }
+    },
+    [inputDisabled, handleFile],
+  );
 
   return (
     <div className="w-full mt-5 max-w-3xl mx-auto flex flex-col gap-6">
@@ -351,6 +364,7 @@ export function DocumentUpload({ orgId, projectId }: { orgId: string; projectId:
             {/* Configuration Options */}
             {status !== "completed" && (
               <div className="py-5 space-y-4">
+                {/* 1. OCR for Text/Images */}
                 {pending.ocrCandidate && (
                   <div
                     className={`p-4 rounded-xl border ${pending.useOcr ? "border-primary-200 dark:border-primary-900/50 bg-primary-50/50 dark:bg-primary-900/10" : "border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50"} transition-colors`}
@@ -367,7 +381,6 @@ export function DocumentUpload({ orgId, projectId }: { orgId: string; projectId:
                             Extract Text from Images (OCR)
                           </h4>
 
-                          {/* Custom Toggle Switch */}
                           <button
                             type="button"
                             role="switch"
@@ -395,6 +408,118 @@ export function DocumentUpload({ orgId, projectId }: { orgId: string; projectId:
                             <p>
                               OCR cannot be enabled because an OCR model has not been configured for
                               this project. Please update your project configs.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. Audio Transcription */}
+                {pending.category === "audio" && (
+                  <div
+                    className={`p-4 rounded-xl border ${pending.useAudioTranscription ? "border-primary-200 dark:border-primary-900/50 bg-primary-50/50 dark:bg-primary-900/10" : "border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50"} transition-colors`}
+                  >
+                    <div className="flex gap-4">
+                      <div className="mt-0.5">
+                        <Mic
+                          className={`w-5 h-5 ${pending.useAudioTranscription ? "text-primary-600 dark:text-primary-400" : "text-zinc-400 dark:text-zinc-500"}`}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                            Extract Transcript from Audio
+                          </h4>
+
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={pending.useAudioTranscription}
+                            disabled={!hasAudioModel || status === "completing"}
+                            onClick={() =>
+                              setPending({
+                                ...pending,
+                                useAudioTranscription: !pending.useAudioTranscription,
+                              })
+                            }
+                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 
+                            ${pending.useAudioTranscription ? "bg-primary-600" : "bg-zinc-300 dark:bg-zinc-700"}`}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${pending.useAudioTranscription ? "translate-x-2" : "-translate-x-2"}`}
+                            />
+                          </button>
+                        </div>
+
+                        <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1.5 leading-relaxed">
+                          Enabling transcription will convert the spoken words in your audio file
+                          into searchable text for the AI.
+                        </p>
+
+                        {!hasAudioModel && (
+                          <div className="flex items-start gap-1.5 mt-3 text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 p-2 rounded-lg">
+                            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                            <p>
+                              Audio transcription cannot be enabled because an Audio model has not
+                              been configured for this project. Please update your project configs.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Video Transcription / Analysis */}
+                {pending.category === "video" && (
+                  <div
+                    className={`p-4 rounded-xl border ${pending.useVideoTranscription ? "border-primary-200 dark:border-primary-900/50 bg-primary-50/50 dark:bg-primary-900/10" : "border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50"} transition-colors`}
+                  >
+                    <div className="flex gap-4">
+                      <div className="mt-0.5">
+                        <Film
+                          className={`w-5 h-5 ${pending.useVideoTranscription ? "text-primary-600 dark:text-primary-400" : "text-zinc-400 dark:text-zinc-500"}`}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                            Extract Data from Video
+                          </h4>
+
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={pending.useVideoTranscription}
+                            disabled={!hasVideoModel || status === "completing"}
+                            onClick={() =>
+                              setPending({
+                                ...pending,
+                                useVideoTranscription: !pending.useVideoTranscription,
+                              })
+                            }
+                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 
+                            ${pending.useVideoTranscription ? "bg-primary-600" : "bg-zinc-300 dark:bg-zinc-700"}`}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${pending.useVideoTranscription ? "translate-x-2" : "-translate-x-2"}`}
+                            />
+                          </button>
+                        </div>
+
+                        <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1.5 leading-relaxed">
+                          Enabling video processing allows the AI to extract visual frames and
+                          transcripts for search and analysis.
+                        </p>
+
+                        {!hasVideoModel && (
+                          <div className="flex items-start gap-1.5 mt-3 text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 p-2 rounded-lg">
+                            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                            <p>
+                              Video extraction cannot be enabled because a Video model has not been
+                              configured for this project. Please update your project configs.
                             </p>
                           </div>
                         )}

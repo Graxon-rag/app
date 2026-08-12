@@ -23,7 +23,7 @@ interface DocumentStore {
     bucket: string,
     key: string,
   ) => Promise<string | null>;
-  submitForProcessDocument: (orgId: string, projectId: string, id: string) => Promise<void>;
+  submitForProcessDocument: (orgId: string, projectId: string, id: string) => Promise<boolean>;
   initMultipartUpload: (
     orgId: string,
     projectId: string,
@@ -136,9 +136,10 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
         get().getAllDocuments(orgId, projectId);
       }
 
-      return data;
+      return true;
     } catch (error) {
       console.log(error);
+      return false;
     }
   },
   initMultipartUpload: async (
