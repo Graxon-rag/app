@@ -7,7 +7,7 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggle}
-      className="flex items-center justify-center w-8 h-8 rounded-lg
+      className="flex items-center cursor-pointer justify-center w-8 h-8 rounded-lg
                  text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100
                  hover:bg-zinc-100 dark:hover:bg-zinc-800
                  transition-all duration-150"

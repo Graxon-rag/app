@@ -128,17 +128,47 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
   const getStatusStyles = (status: string) => {
     switch (status) {
       case "PENDING":
-        return "bg-gray-500 text-white";
-      case "PROCESSING":
-        return "bg-blue-500 text-white";
-      case "PROCESSED":
-        return "bg-green-500 text-white";
-      case "FAILED":
-        return "bg-red-500 text-white";
+        return {
+          badge:
+            "bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800/60 dark:text-zinc-300 dark:border-zinc-700",
+          dot: "bg-zinc-400",
+          label: "Pending",
+        };
       case "QUEUED":
-        return "bg-yellow-500 text-white";
+        return {
+          badge:
+            "bg-yellow-50 text-yellow-700 border-yellow-200/60 dark:bg-yellow-950/40 dark:text-yellow-400 dark:border-yellow-600/60",
+          dot: "bg-yellow-500",
+          label: "Queued",
+        };
+      case "PROCESSING":
+        return {
+          badge:
+            "bg-blue-50 text-blue-700 border-blue-200/60 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/60",
+          dot: "bg-blue-500 animate-pulse",
+          label: "Processing",
+        };
+      case "PROCESSED":
+        return {
+          badge:
+            "bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60",
+          dot: "bg-emerald-500",
+          label: "Processed",
+        };
+      case "FAILED":
+        return {
+          badge:
+            "bg-red-50 text-red-700 border-red-200/60 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/60",
+          dot: "bg-red-500",
+          label: "Failed",
+        };
       default:
-        return "bg-zinc-500 text-white";
+        return {
+          badge:
+            "bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700",
+          dot: "bg-zinc-400",
+          label: status,
+        };
     }
   };
 
@@ -199,7 +229,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
 
               {/* Name Column with File Icon */}
               <td className="p-3">
-                <div className="flex items-center gap-2" onClick={() => handleView(doc)}>
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleView(doc)}
                     className="cursor-pointer hover:opacity-90"
@@ -228,9 +258,17 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
               <td className="p-3 text-zinc-500">{formatBytes(doc.size)}</td>
 
               <td className="p-3">
-                <span className={`text-xs px-2 py-1 rounded ${getStatusStyles(doc.status)}`}>
-                  {doc.status}
-                </span>
+                {(() => {
+                  const style = getStatusStyles(doc.status);
+                  return (
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${style.badge}`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+                      {style.label}
+                    </span>
+                  );
+                })()}
               </td>
 
               <td className="p-3 text-zinc-500">{new Date(doc.created_at).toLocaleString()}</td>
