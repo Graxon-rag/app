@@ -13,6 +13,7 @@ import {
   FileVideo,
   Image as ImageIcon,
   File,
+  ScanText,
 } from "lucide-react";
 import { useDocumentStore } from "@/store/documentStore";
 import { DocumentInterface } from "@/interfaces/DocumentInterface";
@@ -69,6 +70,17 @@ const getFileIcon = (filename: string) => {
 
   // Default icon
   return <File size={16} className="text-zinc-400" />;
+};
+
+const getProcessActionLabel = (status: string) => {
+  switch (status) {
+    case "FAILED":
+      return "Retry Processing";
+    case "PROCESSED":
+      return "Reprocess";
+    default:
+      return "Process";
+  }
 };
 
 function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string }) {
@@ -186,10 +198,29 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
               </td>
 
               {/* Name Column with File Icon */}
-              <td className="p-3" title={doc.name}>
-                <div className="flex items-center gap-2">
-                  {getFileIcon(doc.name)}
-                  <span>{doc.name.length > 20 ? `${doc.name.slice(0, 20)}...` : doc.name}</span>
+              <td className="p-3">
+                <div className="flex items-center gap-2" onClick={() => handleView(doc)}>
+                  <button
+                    onClick={() => handleView(doc)}
+                    className="cursor-pointer hover:opacity-90"
+                  >
+                    {getFileIcon(doc.name)}
+                  </button>
+
+                  <span title={doc.name}>
+                    {doc.name.length > 20 ? `${doc.name.slice(0, 20)}...` : doc.name}
+                  </span>
+
+                  {/* OCR Needed Indicator */}
+                  {doc.is_ocr_needed && (
+                    <span
+                      title="OCR processing required for this document"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 cursor-help"
+                    >
+                      {/* <ScanText size={12} className="shrink-0" /> */}
+                      <span>OCR</span>
+                    </span>
+                  )}
                 </div>
               </td>
 
@@ -218,32 +249,6 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                     align="end"
                     className="z-50 min-w-[160px] rounded-lg border bg-white dark:bg-zinc-900 dark:border-zinc-800 shadow-md p-1"
                   >
-                    {/* PROCESS */}
-
-                    <DropdownMenu.Item
-                      onClick={() => handleProcess(doc)}
-                      className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none"
-                    >
-                      Process
-                    </DropdownMenu.Item>
-
-                    {/* {doc.status === "PENDING" && (
-                      <DropdownMenu.Item
-                        onClick={() => handleProcess(doc)}
-                        className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none"
-                      >
-                        Process
-                      </DropdownMenu.Item>
-                    )} */}
-                    {doc.status === "FAILED" && (
-                      <DropdownMenu.Item
-                        onClick={() => handleProcess(doc)}
-                        className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none"
-                      >
-                        Process Again
-                      </DropdownMenu.Item>
-                    )}
-
                     {/* VIEW */}
                     <DropdownMenu.Item
                       onClick={() => handleView(doc)}
@@ -251,6 +256,18 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                     >
                       View
                     </DropdownMenu.Item>
+
+                    <DropdownMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />
+
+                    {/* PROCESS / RETRY */}
+                    <DropdownMenu.Item
+                      onClick={() => handleProcess(doc)}
+                      disabled={doc.status === "PROCESSING" || doc.status === "QUEUED"}
+                      className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {getProcessActionLabel(doc.status)}
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />
 
                     {/* Query */}
                     {doc.status === "PROCESSED" && (
@@ -260,6 +277,9 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                       >
                         Query
                       </DropdownMenu.Item>
+                    )}
+                    {doc.status === "PROCESSED" && (
+                      <DropdownMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />
                     )}
 
                     {/* OBJECT STORE */}

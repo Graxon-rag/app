@@ -23,6 +23,7 @@ export interface DocumentInterface {
   key: string;
   size?: number;
   status: string;
+  is_ocr_needed?: boolean;
   created_at: string;
   updated_at: string;
 }
