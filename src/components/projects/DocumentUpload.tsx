@@ -241,7 +241,7 @@ export function DocumentUpload({ orgId, projectId }: { orgId: string; projectId:
       }
 
       deleteSession(pending.file.name);
-      await getAllDocuments(orgId, projectId);
+      await getAllDocuments(orgId, projectId, {});
       setStatus("completed");
     } catch (err) {
       console.error(err);

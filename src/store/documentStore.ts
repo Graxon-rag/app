@@ -1,32 +1,25 @@
 import { create } from "zustand";
-import { DocumentInterface } from "@/interfaces/DocumentInterface";
+import { DocumentInterface, DocumentFilters } from "@/interfaces/DocumentInterface";
 import { PaginationInterface } from "@/interfaces/CommonInterface";
 import { axiosClient } from "@/utils/axiosClient";
 
 interface DocumentStore {
   documents: DocumentInterface[];
   pagination: PaginationInterface;
-  getAllDocuments: (
-    orgId: string,
-    projectId: string,
-    page?: number,
-    limit?: number,
-  ) => Promise<void>;
+  getAllDocuments: (orgId: string, projectId: string, filters: DocumentFilters) => Promise<void>;
   uploadDocument: (
     orgId: string,
     projectId: string,
     documentId: string,
     file: File,
-    page?: number,
-    limit?: number,
+    params?: DocumentFilters,
   ) => Promise<void>;
   getDocument: (orgId: string, projectId: string, id: string) => Promise<DocumentInterface | null>;
   deleteDocument: (
     orgId: string,
     projectId: string,
     id: string,
-    page?: number,
-    limit?: number,
+    params?: DocumentFilters,
   ) => Promise<DocumentInterface | null>;
   getPresignedUrl: (
     orgId: string,
@@ -34,13 +27,7 @@ interface DocumentStore {
     bucket: string,
     key: string,
   ) => Promise<string | null>;
-  submitForProcessDocument: (
-    orgId: string,
-    projectId: string,
-    id: string,
-    page?: number,
-    limit?: number,
-  ) => Promise<boolean>;
+  submitForProcessDocument: (orgId: string, projectId: string, id: string) => Promise<boolean>;
   initMultipartUpload: (
     orgId: string,
     projectId: string,
@@ -75,19 +62,27 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
     current_page: 1,
     current_limit: 10,
   },
-  getAllDocuments: async (orgId: string, projectId: string, page = 1, limit = 10) => {
+  getAllDocuments: async (orgId: string, projectId: string, filters: DocumentFilters = {}) => {
     try {
-      const url = `/api/documents/${orgId}/projects/${projectId}/get/all?page=${page}&limit=${limit}`;
-
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          if (Array.isArray(value)) {
+            value.forEach((v) => params.append("types", v));
+          } else {
+            params.append(key, String(value));
+          }
+        }
+      });
+      const url = `/api/documents/${orgId}/projects/${projectId}/get/all?${params.toString()}`;
       const response = await axiosClient.get(url);
-
       const result = response.data?.data?.data;
       set({
         documents: result?.data ?? [],
         pagination: result?.pagination ?? {
           total_pages: 1,
-          current_page: page,
-          current_limit: limit,
+          current_page: filters.page || 1,
+          current_limit: filters.limit || 10,
         },
       });
     } catch (error) {
@@ -107,8 +102,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
     projectId: string,
     documentId: string,
     file: File,
-    page = 1,
-    limit = 10,
+    params: DocumentFilters = {},
   ) => {
     try {
       const url = `/api/documents/${orgId}/projects/${projectId}/upload/${documentId}`;
@@ -124,13 +118,18 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
 
       const data = response.data?.data ?? null;
       if (data) {
-        get().getAllDocuments(orgId, projectId, page, limit);
+        get().getAllDocuments(orgId, projectId, params);
       }
     } catch (error) {
       console.log(error);
     }
   },
-  deleteDocument: async (orgId: string, projectId: string, id: string, page = 1, limit = 10) => {
+  deleteDocument: async (
+    orgId: string,
+    projectId: string,
+    id: string,
+    params: DocumentFilters = {},
+  ) => {
     try {
       const url = `/api/documents/${orgId}/projects/${projectId}/delete/${id}`;
 
@@ -138,7 +137,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
       const data = response.data?.data ?? null;
 
       if (data) {
-        get().getAllDocuments(orgId, projectId, page, limit);
+        get().getAllDocuments(orgId, projectId, params);
       }
 
       return data;
@@ -162,13 +161,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
       console.log(error);
     }
   },
-  submitForProcessDocument: async (
-    orgId: string,
-    projectId: string,
-    id: string,
-    page = 1,
-    limit = 10,
-  ) => {
+  submitForProcessDocument: async (orgId: string, projectId: string, id: string) => {
     try {
       const url = `/api/documents/${orgId}/projects/${projectId}/process/${id}`;
 
@@ -176,7 +169,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
       const data = response.data?.data ?? null;
 
       if (data) {
-        get().getAllDocuments(orgId, projectId, page, limit);
+        get().getAllDocuments(orgId, projectId, {});
       }
 
       return true;

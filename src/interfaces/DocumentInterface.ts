@@ -27,3 +27,17 @@ export interface DocumentInterface {
   created_at: string;
   updated_at: string;
 }
+
+
+export interface DocumentFilters {
+  page?: number;
+  limit?: number;
+  status?: string;
+  name?: string;
+  type?: string;
+  types?: string[];
+  size?: number;
+  size_op?: ">" | "<" | "=";
+  sort_by?: "created_at" | "updated_at" | "name" | "size";
+  sort_order?: "asc" | "desc";
+}

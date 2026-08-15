@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
   Check,
@@ -16,10 +16,13 @@ import {
   ChevronLeft,
   ChevronRight,
   RefreshCw,
+  Search,
+  ArrowUpDown,
+  FilterX,
 } from "lucide-react";
 import { useDocumentStore } from "@/store/documentStore";
 import { DocumentInterface } from "@/interfaces/DocumentInterface";
-
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   PLAIN_TEXT_EXTENSIONS,
   DOCUMENT_EXTENSIONS,
@@ -32,52 +35,38 @@ import {
   AUDIO_EXTENSIONS,
   VIDEO_EXTENSIONS,
 } from "@/libs/documentTypes";
-import { useNavigate, useSearchParams } from "react-router-dom";
+
+const EXTENSION_CATEGORIES: Record<string, { label: string; extensions: string[] }> = {
+  document: { label: "Documents", extensions: DOCUMENT_EXTENSIONS },
+  spreadsheet: { label: "Spreadsheets", extensions: SPREADSHEET_EXTENSIONS },
+  presentation: { label: "Presentations", extensions: PRESENTATION_EXTENSIONS },
+  text: { label: "Plain Text", extensions: PLAIN_TEXT_EXTENSIONS },
+  code: { label: "Code & Scripts", extensions: CODE_EXTENSIONS },
+  markup: { label: "Markup (HTML)", extensions: MARKUP_EXTENSIONS },
+  structured: { label: "Structured (JSON/YAML)", extensions: STRUCTURED_DATA_EXTENSIONS },
+  image: { label: "Images", extensions: IMAGE_EXTENSIONS },
+  audio: { label: "Audio", extensions: AUDIO_EXTENSIONS },
+  video: { label: "Video", extensions: VIDEO_EXTENSIONS },
+};
 
 const getFileIcon = (filename: string) => {
   const ext = filename.slice(filename.lastIndexOf(".")).toLowerCase();
-
   if (DOCUMENT_EXTENSIONS.includes(ext)) {
-    const isPdf = ext === ".pdf";
-    return <FileText size={16} className={isPdf ? "text-red-500" : "text-blue-500"} />;
+    return <FileText size={16} className={ext === ".pdf" ? "text-red-500" : "text-blue-500"} />;
   }
-  if (PLAIN_TEXT_EXTENSIONS.includes(ext)) {
-    return <FileText size={16} className="text-zinc-400" />;
-  }
-  if (SPREADSHEET_EXTENSIONS.includes(ext)) {
+  if (PLAIN_TEXT_EXTENSIONS.includes(ext)) return <FileText size={16} className="text-zinc-400" />;
+  if (SPREADSHEET_EXTENSIONS.includes(ext))
     return <FileSpreadsheet size={16} className="text-green-500" />;
-  }
-  if (PRESENTATION_EXTENSIONS.includes(ext)) {
+  if (PRESENTATION_EXTENSIONS.includes(ext))
     return <Presentation size={16} className="text-orange-500" />;
-  }
-  if (STRUCTURED_DATA_EXTENSIONS.includes(ext)) {
+  if (STRUCTURED_DATA_EXTENSIONS.includes(ext))
     return <FileJson size={16} className="text-yellow-500" />;
-  }
-  if (CODE_EXTENSIONS.includes(ext) || MARKUP_EXTENSIONS.includes(ext)) {
+  if (CODE_EXTENSIONS.includes(ext) || MARKUP_EXTENSIONS.includes(ext))
     return <FileCode size={16} className="text-purple-500" />;
-  }
-  if (IMAGE_EXTENSIONS.includes(ext)) {
-    return <ImageIcon size={16} className="text-emerald-500" />;
-  }
-  if (AUDIO_EXTENSIONS.includes(ext)) {
-    return <FileAudio size={16} className="text-pink-500" />;
-  }
-  if (VIDEO_EXTENSIONS.includes(ext)) {
-    return <FileVideo size={16} className="text-indigo-500" />;
-  }
-
+  if (IMAGE_EXTENSIONS.includes(ext)) return <ImageIcon size={16} className="text-emerald-500" />;
+  if (AUDIO_EXTENSIONS.includes(ext)) return <FileAudio size={16} className="text-pink-500" />;
+  if (VIDEO_EXTENSIONS.includes(ext)) return <FileVideo size={16} className="text-indigo-500" />;
   return <File size={16} className="text-zinc-400" />;
-};
-
-const getProcessActionLabel = (status: string) => {
-  switch (status) {
-    case "FAILED":
-      return "Retry Processing";
-    case "PROCESSED":
-      return "Reprocess";
-    default:
-      return "Process";
-  }
 };
 
 const getStatusStyles = (status: string) => {
@@ -131,72 +120,111 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Read page and limit from URL query params (default: page=1, limit=10)
+  // Read URL search query parameters
   const page = parseInt(searchParams.get("page") || "1", 10);
   const limit = parseInt(searchParams.get("limit") || "10", 10);
+  const statusFilter = searchParams.get("status") || "";
+  const nameFilter = searchParams.get("name") || "";
+  const categoryFilter = searchParams.get("category") || "";
+  const typeFilter = searchParams.get("type") || "";
+  const sizeOpFilter = (searchParams.get("size_op") as ">" | "<" | "=") || ">";
+  const sizeMbFilter = searchParams.get("size_mb") || "";
+  const sortBy =
+    (searchParams.get("sort_by") as "created_at" | "updated_at" | "name" | "size") || "created_at";
+  const sortOrder = (searchParams.get("sort_order") as "asc" | "desc") || "desc";
+
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchInput, setSearchInput] = useState(nameFilter);
+
+  const { documents, pagination, getAllDocuments, deleteDocument, submitForProcessDocument } =
+    useDocumentStore();
+
+  // Fetch documents on parameter changes
+  useEffect(() => {
+    const sizeInBytes = sizeMbFilter
+      ? Math.round(parseFloat(sizeMbFilter) * 1024 * 1024)
+      : undefined;
+    const types =
+      categoryFilter && !typeFilter ? EXTENSION_CATEGORIES[categoryFilter]?.extensions : undefined;
+
+    getAllDocuments(orgId, projectId, {
+      page,
+      limit,
+      status: statusFilter || undefined,
+      name: nameFilter || undefined,
+      type: typeFilter || undefined,
+      types,
+      size: sizeInBytes,
+      size_op: sizeMbFilter ? sizeOpFilter : undefined,
+      sort_by: sortBy,
+      sort_order: sortOrder,
+    });
+  }, [
+    orgId,
+    projectId,
+    page,
+    limit,
+    statusFilter,
+    nameFilter,
+    categoryFilter,
+    typeFilter,
+    sizeOpFilter,
+    sizeMbFilter,
+    sortBy,
+    sortOrder,
+  ]);
+
+  const updateFilters = (updates: Record<string, string | null>) => {
+    const next = new URLSearchParams(searchParams);
+    Object.entries(updates).forEach(([key, val]) => {
+      if (!val) {
+        next.delete(key);
+      } else {
+        next.set(key, val);
+      }
+    });
+    if (!updates.page && updates.page !== null) {
+      next.set("page", "1"); // Reset to page 1 on filter changes
+    }
+    setSearchParams(next);
+  };
+
+  const clearFilters = () => {
+    setSearchInput("");
+    setSearchParams(new URLSearchParams({ page: "1", limit: limit.toString(), tab: "documents" }));
+  };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await getAllDocuments(orgId, projectId, page, limit);
+      const sizeInBytes = sizeMbFilter
+        ? Math.round(parseFloat(sizeMbFilter) * 1024 * 1024)
+        : undefined;
+      const types =
+        categoryFilter && !typeFilter
+          ? EXTENSION_CATEGORIES[categoryFilter]?.extensions
+          : undefined;
+      await getAllDocuments(orgId, projectId, {
+        page,
+        limit,
+        status: statusFilter || undefined,
+        name: nameFilter || undefined,
+        type: typeFilter || undefined,
+        types,
+        size: sizeInBytes,
+        size_op: sizeMbFilter ? sizeOpFilter : undefined,
+        sort_by: sortBy,
+        sort_order: sortOrder,
+      });
     } finally {
       setIsRefreshing(false);
     }
   };
 
-  const { documents, pagination, getAllDocuments, deleteDocument, submitForProcessDocument } =
-    useDocumentStore();
-
-  useEffect(() => {
-    getAllDocuments(orgId, projectId, page, limit);
-  }, [orgId, projectId, page, limit]);
-
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  const handlePageChange = (newPage: number) => {
-    const params = new URLSearchParams(searchParams);
-    params.set("page", newPage.toString());
-    setSearchParams(params);
-  };
-
-  const handleLimitChange = (newLimit: number) => {
-    const params = new URLSearchParams(searchParams);
-    params.set("limit", newLimit.toString());
-    params.set("page", "1"); // Reset to first page on limit change
-    setSearchParams(params);
-  };
-
-  const handleView = (doc: DocumentInterface) => {
-    const url = `/organizations/${orgId}/projects/${projectId}/docs/${doc.id}/view`;
-    navigate(url);
-  };
-
-  const handleObjectView = (doc: DocumentInterface) => {
-    const url = `${import.meta.env.VITE_MINIO_URL}/browser/${doc.bucket}/${doc.key}`;
-    window.open(url, "_blank");
-  };
-
-  const handleQueryDocument = (documentId: string) => {
-    const url = `/organizations/${orgId}/projects/${projectId}/docs/${documentId}/query`;
-    window.open(url, "_blank");
-  };
-
-  const handleDelete = async (doc: DocumentInterface) => {
-    if (!confirm("Delete this document?")) return;
-    await deleteDocument(orgId, projectId, doc.id, page, limit);
-    // await getAllDocuments(orgId, projectId, page, limit);
-  };
-
-  const handleProcess = async (doc: DocumentInterface) => {
-    try {
-      const response = await submitForProcessDocument(orgId, projectId, doc.id, page, limit);
-      if (response === false) return;
-      alert("Submitted for processing");
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const availableExtensions = useMemo(() => {
+    return categoryFilter ? EXTENSION_CATEGORIES[categoryFilter]?.extensions || [] : [];
+  }, [categoryFilter]);
 
   const formatBytes = (bytes?: number) => {
     if (bytes === undefined || bytes === null) return "Null";
@@ -215,32 +243,157 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
 
   const totalPages = pagination?.total_pages || 1;
   const currentPage = pagination?.current_page || page;
+  const hasActiveFilters = Boolean(
+    statusFilter ||
+    nameFilter ||
+    categoryFilter ||
+    typeFilter ||
+    sizeMbFilter ||
+    sortBy !== "created_at" ||
+    sortOrder !== "desc",
+  );
 
   return (
-    <div className="space-y-3 mb-10">
-      {/* Top Controls Bar with Right-Aligned Pagination */}
+    <div className="space-y-3 mb-10 text-zinc-900 dark:text-zinc-100">
+      {/* 1. FILTER CONTROLS TOOLBAR */}
+      <div className="p-3 bg-zinc-50 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 rounded-xl space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          {/* Name Search */}
+          <div className="relative">
+            <Search
+              size={14}
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400"
+            />
+            <input
+              type="text"
+              placeholder="Search filename..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && updateFilters({ name: searchInput })}
+              onBlur={() => updateFilters({ name: searchInput })}
+              className="w-full pl-8 pr-2 py-1.5 text-xs bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg outline-none focus:ring-1 focus:ring-zinc-400"
+            />
+          </div>
+
+          {/* Status Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => updateFilters({ status: e.target.value })}
+            className="px-2 py-1.5 text-xs bg-white dark:bg-zinc-800 cursor-pointer border border-zinc-200 dark:border-zinc-700 rounded-lg outline-none focus:ring-1 focus:ring-zinc-400"
+          >
+            <option value="">All Statuses</option>
+            <option value="PENDING">Pending</option>
+            <option value="QUEUED">Queued</option>
+            <option value="PROCESSING">Processing</option>
+            <option value="PROCESSED">Processed</option>
+            <option value="FAILED">Failed</option>
+          </select>
+
+          {/* Type Category Dropdown */}
+          <select
+            value={categoryFilter}
+            onChange={(e) => updateFilters({ category: e.target.value, type: null })}
+            className="px-2 py-1.5 text-xs bg-white dark:bg-zinc-800 border cursor-pointer border-zinc-200 dark:border-zinc-700 rounded-lg outline-none focus:ring-1 focus:ring-zinc-400"
+          >
+            <option value="">All File Types</option>
+            {Object.entries(EXTENSION_CATEGORIES).map(([key, info]) => (
+              <option key={key} value={key}>
+                {info.label}
+              </option>
+            ))}
+          </select>
+
+          {/* Specific Extension Dropdown (Dependent on Category) */}
+          <select
+            value={typeFilter}
+            disabled={!categoryFilter}
+            onChange={(e) => updateFilters({ type: e.target.value })}
+            className="px-2 py-1.5 text-xs bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg outline-none focus:ring-1 focus:ring-zinc-400 disabled:opacity-40"
+          >
+            <option value="">All Extensions</option>
+            {availableExtensions.map((ext) => (
+              <option key={ext} value={ext.replace(".", "")}>
+                {ext}
+              </option>
+            ))}
+          </select>
+
+          {/* Size Filter (<, >, = MB) */}
+          <div className="flex items-center gap-1">
+            <select
+              value={sizeOpFilter}
+              onChange={(e) => updateFilters({ size_op: e.target.value })}
+              className="w-12 px-1 py-1.5 text-xs bg-white cursor-pointer dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg outline-none"
+            >
+              <option value=">">&gt;</option>
+              <option value="<">&lt;</option>
+              <option value="=">=</option>
+            </select>
+            <input
+              type="number"
+              step="0.1"
+              placeholder="Size (MB)"
+              value={sizeMbFilter}
+              onChange={(e) => updateFilters({ size_mb: e.target.value })}
+              className="w-full px-2 py-1.5 text-xs bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg outline-none focus:ring-1 focus:ring-zinc-400"
+            />
+          </div>
+
+          {/* Sort By & Order */}
+          <div className="flex items-center gap-1">
+            <select
+              value={sortBy}
+              onChange={(e) => updateFilters({ sort_by: e.target.value })}
+              className="w-full px-2 py-1.5 text-xs bg-white dark:bg-zinc-800 cursor-pointer border border-zinc-200 dark:border-zinc-700 rounded-lg outline-none"
+            >
+              <option value="created_at">Created Date</option>
+              <option value="updated_at">Updated Date</option>
+              <option value="name">Name</option>
+              <option value="size">Size</option>
+            </select>
+            <button
+              onClick={() => updateFilters({ sort_order: sortOrder === "asc" ? "desc" : "asc" })}
+              className="p-1.5 border border-zinc-200 cursor-pointer dark:border-zinc-700 bg-white dark:bg-zinc-800 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700"
+              title={`Sort ${sortOrder === "asc" ? "Descending" : "Ascending"}`}
+            >
+              <ArrowUpDown size={14} className={sortOrder === "asc" ? "text-blue-500" : ""} />
+            </button>
+          </div>
+        </div>
+
+        {hasActiveFilters && (
+          <div className="flex items-center justify-end pt-1">
+            <button
+              onClick={clearFilters}
+              className="inline-flex items-center gap-1 cursor-pointer text-xs text-red-500 hover:text-red-600 transition-colors"
+            >
+              <FilterX size={13} /> Reset Filters
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* 2. TOP ACTIONS & PAGINATION BAR */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300">Documents</span>
-          {/* Refresh Button */}
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
             title="Refresh documents"
-            className="p-1 rounded-md border border-zinc-200 cursor-pointer dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+            className="p-1 rounded-md border cursor-pointer border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 text-zinc-500 transition-colors"
           >
             <RefreshCw size={14} className={isRefreshing ? "animate-spin text-zinc-400" : ""} />
           </button>
         </div>
-        {/* Top-Right Pagination Controls */}
+
         <div className="flex items-center gap-3">
-          {/* Rows per page selector */}
           <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
             <span>Rows:</span>
             <select
               value={limit}
-              onChange={(e) => handleLimitChange(Number(e.target.value))}
-              className="bg-transparent border border-zinc-200 cursor-pointer dark:border-zinc-800 rounded px-1.5 py-0.5 text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600"
+              onChange={(e) => updateFilters({ limit: e.target.value, page: "1" })}
+              className="bg-transparent border cursor-pointer border-zinc-200 dark:border-zinc-800 rounded px-1.5 py-0.5 text-xs text-zinc-700 dark:text-zinc-300"
             >
               <option value={10} className="dark:bg-zinc-900">
                 10
@@ -257,28 +410,24 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
             </select>
           </div>
 
-          {/* Current Page Counter */}
           <span className="text-xs text-zinc-500 dark:text-zinc-400">
             Page{" "}
             <span className="font-semibold text-zinc-800 dark:text-zinc-200">{currentPage}</span> of{" "}
             <span className="font-semibold text-zinc-800 dark:text-zinc-200">{totalPages}</span>
           </span>
 
-          {/* Prev / Next Page Buttons */}
           <div className="flex items-center gap-1">
             <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage <= 1}
-              className="p-1 rounded-md border border-zinc-200 cursor-pointer dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-600 dark:text-zinc-300 transition-colors"
-              title="Previous Page"
+              onClick={() => updateFilters({ page: (currentPage - 1).toString() })}
+              disabled={currentPage <= 1 || isRefreshing}
+              className="p-1 rounded-md border border-zinc-200 cursor-pointer dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronLeft size={16} />
             </button>
             <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage >= totalPages}
-              className="p-1 rounded-md border border-zinc-200 cursor-pointer dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-600 dark:text-zinc-300 transition-colors"
-              title="Next Page"
+              onClick={() => updateFilters({ page: (currentPage + 1).toString() })}
+              disabled={currentPage >= totalPages || isRefreshing}
+              className="p-1 rounded-md border border-zinc-200 cursor-pointer dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronRight size={16} />
             </button>
@@ -286,7 +435,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
         </div>
       </div>
 
-      {/* Table Container */}
+      {/* 3. DOCUMENTS TABLE */}
       <div className="rounded-xl border bg-white dark:bg-zinc-900 dark:border-zinc-800 overflow-hidden">
         <table className="w-full text-sm whitespace-nowrap">
           <thead className="bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
@@ -301,51 +450,44 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
               <th className="text-right p-3">Actions</th>
             </tr>
           </thead>
-
           <tbody>
             {documents.map((doc: DocumentInterface) => (
               <tr
                 key={doc.id}
                 className="border-t dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
               >
-                {/* ID Column */}
                 <td className="p-3 font-mono text-xs">
                   <button
                     onClick={() => handleCopyId(doc.id)}
-                    className="flex items-center gap-1.5 px-2 py-1 -ml-2 cursor-pointer rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-                    title="Copy full ID"
+                    className="flex items-center gap-1.5 px-2 py-1 -ml-2 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                    title="Copy ID"
                   >
                     {doc.id.substring(0, 8)}...
                     {copiedId === doc.id ? (
-                      <span className="flex items-center text-green-500 dark:text-green-400">
-                        <Check size={14} />
-                      </span>
+                      <Check size={14} className="text-green-500" />
                     ) : (
                       <Copy size={14} />
                     )}
                   </button>
                 </td>
 
-                {/* Name Column */}
                 <td className="p-3">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handleView(doc)}
-                      className="cursor-pointer hover:opacity-90"
+                      onClick={() =>
+                        navigate(
+                          `/organizations/${orgId}/projects/${projectId}/docs/${doc.id}/view`,
+                        )
+                      }
                     >
                       {getFileIcon(doc.name)}
                     </button>
-
                     <span title={doc.name}>
                       {doc.name.length > 20 ? `${doc.name.slice(0, 20)}...` : doc.name}
                     </span>
-
                     {doc.is_ocr_needed && (
-                      <span
-                        title="OCR processing required for this document"
-                        className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 cursor-help"
-                      >
-                        <span>OCR</span>
+                      <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                        OCR
                       </span>
                     )}
                   </div>
@@ -354,7 +496,6 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                 <td className="p-3">{doc.type}</td>
                 <td className="p-3 text-zinc-500">{formatBytes(doc.size)}</td>
 
-                {/* Status Column */}
                 <td className="p-3">
                   {(() => {
                     const style = getStatusStyles(doc.status);
@@ -372,8 +513,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                 <td className="p-3 text-zinc-500">{new Date(doc.created_at).toLocaleString()}</td>
                 <td className="p-3 text-zinc-500">{new Date(doc.updated_at).toLocaleString()}</td>
 
-                {/* Action Menu */}
-                <td className="p-3 text-right">
+                <td className="p-3 text-right ">
                   <DropdownMenu.Root>
                     <DropdownMenu.Trigger asChild>
                       <button className="p-2 rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800">
@@ -386,46 +526,46 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                       className="z-50 min-w-[160px] rounded-lg border bg-white dark:bg-zinc-900 dark:border-zinc-800 shadow-md p-1"
                     >
                       <DropdownMenu.Item
-                        onClick={() => handleView(doc)}
+                        onClick={() =>
+                          navigate(
+                            `/organizations/${orgId}/projects/${projectId}/docs/${doc.id}/view`,
+                          )
+                        }
                         className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none"
                       >
                         View
                       </DropdownMenu.Item>
-
                       <DropdownMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />
-
                       <DropdownMenu.Item
-                        onClick={() => handleProcess(doc)}
+                        onClick={() => submitForProcessDocument(orgId, projectId, doc.id)}
                         disabled={doc.status === "PROCESSING" || doc.status === "QUEUED"}
                         className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {getProcessActionLabel(doc.status)}
+                        {doc.status === "FAILED"
+                          ? "Retry Processing"
+                          : doc.status === "PROCESSED"
+                            ? "Reprocess"
+                            : "Process"}
                       </DropdownMenu.Item>
                       <DropdownMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />
-
-                      {doc.status === "PROCESSED" && (
-                        <>
-                          <DropdownMenu.Item
-                            onClick={() => handleQueryDocument(doc.id)}
-                            className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none"
-                          >
-                            Query
-                          </DropdownMenu.Item>
-                          <DropdownMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />
-                        </>
-                      )}
-
                       <DropdownMenu.Item
-                        onClick={() => handleObjectView(doc)}
+                        onClick={() =>
+                          window.open(
+                            `${import.meta.env.VITE_MINIO_URL}/browser/${doc.bucket}/${doc.key}`,
+                            "_blank",
+                          )
+                        }
                         className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none"
                       >
                         Open in Object Store
                       </DropdownMenu.Item>
-
                       <DropdownMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />
-
                       <DropdownMenu.Item
-                        onClick={() => handleDelete(doc)}
+                        onClick={async () => {
+                          if (!confirm("Delete this document?")) return;
+                          await deleteDocument(orgId, projectId, doc.id);
+                          await handleRefresh();
+                        }}
                         className="px-3 py-2 text-left text-sm rounded-md cursor-pointer text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 outline-none"
                       >
                         Delete
@@ -439,7 +579,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
             {documents.length === 0 && (
               <tr>
                 <td colSpan={8} className="text-center p-6 text-zinc-500">
-                  No documents found
+                  No documents found matching filters
                 </td>
               </tr>
             )}
