@@ -1,10 +1,17 @@
 import { create } from "zustand";
 import { DocumentInterface } from "@/interfaces/DocumentInterface";
+import { PaginationInterface } from "@/interfaces/CommonInterface";
 import { axiosClient } from "@/utils/axiosClient";
 
 interface DocumentStore {
   documents: DocumentInterface[];
-  getAllDocuments: (orgId: string, projectId: string) => Promise<void>;
+  pagination: PaginationInterface;
+  getAllDocuments: (
+    orgId: string,
+    projectId: string,
+    page?: number,
+    limit?: number,
+  ) => Promise<void>;
   uploadDocument: (
     orgId: string,
     projectId: string,
@@ -53,13 +60,26 @@ interface DocumentStore {
 
 export const useDocumentStore = create<DocumentStore>((set, get) => ({
   documents: [],
-  getAllDocuments: async (orgId: string, projectId: string) => {
+  pagination: {
+    total_pages: 1,
+    current_page: 1,
+    current_limit: 10,
+  },
+  getAllDocuments: async (orgId: string, projectId: string, page = 1, limit = 10) => {
     try {
-      const url = `/api/documents/${orgId}/projects/${projectId}/get/all`;
+      const url = `/api/documents/${orgId}/projects/${projectId}/get/all?page=${page}&limit=${limit}`;
 
       const response = await axiosClient.get(url);
 
-      set({ documents: response.data?.data?.data ?? [] });
+      const result = response.data?.data?.data;
+      set({
+        documents: result?.data ?? [],
+        pagination: result?.pagination ?? {
+          total_pages: 1,
+          current_page: page,
+          current_limit: limit,
+        },
+      });
     } catch (error) {
       console.log(error);
       set({ documents: [] });
