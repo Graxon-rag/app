@@ -15,6 +15,7 @@ import {
   File,
   ChevronLeft,
   ChevronRight,
+  RefreshCw,
 } from "lucide-react";
 import { useDocumentStore } from "@/store/documentStore";
 import { DocumentInterface } from "@/interfaces/DocumentInterface";
@@ -133,6 +134,16 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
   // Read page and limit from URL query params (default: page=1, limit=10)
   const page = parseInt(searchParams.get("page") || "1", 10);
   const limit = parseInt(searchParams.get("limit") || "10", 10);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await getAllDocuments(orgId, projectId, page, limit);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const { documents, pagination, getAllDocuments, deleteDocument, submitForProcessDocument } =
     useDocumentStore();
@@ -173,13 +184,13 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
 
   const handleDelete = async (doc: DocumentInterface) => {
     if (!confirm("Delete this document?")) return;
-    await deleteDocument(orgId, projectId, doc.id);
-    await getAllDocuments(orgId, projectId, page, limit);
+    await deleteDocument(orgId, projectId, doc.id, page, limit);
+    // await getAllDocuments(orgId, projectId, page, limit);
   };
 
   const handleProcess = async (doc: DocumentInterface) => {
     try {
-      const response = await submitForProcessDocument(orgId, projectId, doc.id);
+      const response = await submitForProcessDocument(orgId, projectId, doc.id, page, limit);
       if (response === false) return;
       alert("Submitted for processing");
     } catch (error) {
@@ -209,8 +220,18 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
     <div className="space-y-3 mb-10">
       {/* Top Controls Bar with Right-Aligned Pagination */}
       <div className="flex items-center justify-between px-1">
-        <div className="text-sm font-medium text-zinc-600 dark:text-zinc-300">Documents</div>
-
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300">Documents</span>
+          {/* Refresh Button */}
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            title="Refresh documents"
+            className="p-1 rounded-md border border-zinc-200 cursor-pointer dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+          >
+            <RefreshCw size={14} className={isRefreshing ? "animate-spin text-zinc-400" : ""} />
+          </button>
+        </div>
         {/* Top-Right Pagination Controls */}
         <div className="flex items-center gap-3">
           {/* Rows per page selector */}
