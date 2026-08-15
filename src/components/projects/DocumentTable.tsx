@@ -19,6 +19,7 @@ import {
   Search,
   ArrowUpDown,
   FilterX,
+  Loader2,
 } from "lucide-react";
 import { useDocumentStore } from "@/store/documentStore";
 import { DocumentInterface } from "@/interfaces/DocumentInterface";
@@ -35,6 +36,7 @@ import {
   AUDIO_EXTENSIONS,
   VIDEO_EXTENSIONS,
 } from "@/libs/documentTypes";
+import toast from "react-hot-toast";
 
 const EXTENSION_CATEGORIES: Record<string, { label: string; extensions: string[] }> = {
   document: { label: "Documents", extensions: DOCUMENT_EXTENSIONS },
@@ -253,6 +255,39 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
     sortOrder !== "desc",
   );
 
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  const handleProcess = async (doc: DocumentInterface) => {
+    try {
+      const sizeInBytes = sizeMbFilter
+        ? Math.round(parseFloat(sizeMbFilter) * 1024 * 1024)
+        : undefined;
+      const types =
+        categoryFilter && !typeFilter
+          ? EXTENSION_CATEGORIES[categoryFilter]?.extensions
+          : undefined;
+
+      const response = await submitForProcessDocument(orgId, projectId, doc.id, {
+        page,
+        limit,
+        status: statusFilter || undefined,
+        name: nameFilter || undefined,
+        type: typeFilter || undefined,
+        types,
+        size: sizeInBytes,
+        size_op: sizeMbFilter ? sizeOpFilter : undefined,
+        sort_by: sortBy,
+        sort_order: sortOrder,
+      });
+      if (response === false) return;
+      await handleRefresh();
+      toast.success("Submitted for processing"); // use a toast, not alert()
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to submit for processing");
+    }
+  };
+
   return (
     <div className="space-y-3 mb-10 text-zinc-900 dark:text-zinc-100">
       {/* 1. FILTER CONTROLS TOOLBAR */}
@@ -381,9 +416,20 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
             onClick={handleRefresh}
             disabled={isRefreshing}
             title="Refresh documents"
-            className="p-1 rounded-md border cursor-pointer border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 text-zinc-500 transition-colors"
+            className={`p-1.5 rounded-md border cursor-pointer transition-all duration-300 ${
+              isRefreshing
+                ? "border-blue-500/50 bg-blue-500/10 text-blue-400 shadow-[0_0_12px_rgba(59,130,246,0.5)] dark:shadow-[0_0_15px_rgba(96,165,250,0.4)]"
+                : "border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:shadow-[0_0_10px_rgba(255,255,255,0.15)]"
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            <RefreshCw size={14} className={isRefreshing ? "animate-spin text-zinc-400" : ""} />
+            <RefreshCw
+              size={14}
+              className={`${
+                isRefreshing
+                  ? "animate-spin text-blue-500 dark:text-blue-400 drop-shadow-[0_0_6px_rgba(59,130,246,0.8)]"
+                  : ""
+              }`}
+            />
           </button>
         </div>
 
@@ -479,6 +525,7 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                           `/organizations/${orgId}/projects/${projectId}/docs/${doc.id}/view`,
                         )
                       }
+                      className=" cursor-pointer"
                     >
                       {getFileIcon(doc.name)}
                     </button>
@@ -514,7 +561,10 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                 <td className="p-3 text-zinc-500">{new Date(doc.updated_at).toLocaleString()}</td>
 
                 <td className="p-3 text-right ">
-                  <DropdownMenu.Root>
+                  <DropdownMenu.Root
+                    open={openMenuId === doc.id}
+                    onOpenChange={(open) => setOpenMenuId(open ? doc.id : null)}
+                  >
                     <DropdownMenu.Trigger asChild>
                       <button className="p-2 rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800">
                         <MoreVertical size={16} />
@@ -537,17 +587,28 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                       </DropdownMenu.Item>
                       <DropdownMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />
                       <DropdownMenu.Item
-                        onClick={() => submitForProcessDocument(orgId, projectId, doc.id)}
+                        onSelect={(e) => {
+                          if (doc.status === "PROCESSING" || doc.status === "QUEUED") return;
+                          e.preventDefault();
+                          setOpenMenuId(null);
+                          handleProcess(doc);
+                        }}
                         disabled={doc.status === "PROCESSING" || doc.status === "QUEUED"}
-                        className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none data-[disabled]:opacity-50 data-[disabled]:cursor-not-allowed data-[disabled]:hover:bg-transparent data-[disabled]:pointer-events-none"
                       >
-                        {doc.status === "FAILED"
-                          ? "Retry Processing"
-                          : doc.status === "PROCESSED"
-                            ? "Reprocess"
-                            : "Process"}
+                        {(doc.status === "PROCESSING" || doc.status === "QUEUED") && (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        )}
+                        {doc.status === "PROCESSING" || doc.status === "QUEUED"
+                          ? "Processing…"
+                          : doc.status === "FAILED"
+                            ? "Retry Processing"
+                            : doc.status === "PROCESSED"
+                              ? "Reprocess"
+                              : "Process"}
                       </DropdownMenu.Item>
                       <DropdownMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />
+
                       <DropdownMenu.Item
                         onClick={() =>
                           window.open(

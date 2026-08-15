@@ -27,7 +27,12 @@ interface DocumentStore {
     bucket: string,
     key: string,
   ) => Promise<string | null>;
-  submitForProcessDocument: (orgId: string, projectId: string, id: string) => Promise<boolean>;
+  submitForProcessDocument: (
+    orgId: string,
+    projectId: string,
+    id: string,
+    params?: DocumentFilters,
+  ) => Promise<boolean>;
   initMultipartUpload: (
     orgId: string,
     projectId: string,
@@ -161,7 +166,12 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
       console.log(error);
     }
   },
-  submitForProcessDocument: async (orgId: string, projectId: string, id: string) => {
+  submitForProcessDocument: async (
+    orgId: string,
+    projectId: string,
+    id: string,
+    params: DocumentFilters = {},
+  ) => {
     try {
       const url = `/api/documents/${orgId}/projects/${projectId}/process/${id}`;
 
@@ -169,7 +179,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
       const data = response.data?.data ?? null;
 
       if (data) {
-        get().getAllDocuments(orgId, projectId, {});
+        get().getAllDocuments(orgId, projectId, params);
       }
 
       return true;
