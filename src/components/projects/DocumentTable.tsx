@@ -608,12 +608,21 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                       <DropdownMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />
                       <DropdownMenu.Item
                         onSelect={(e) => {
-                          if (doc.status === "PROCESSING" || doc.status === "QUEUED") return;
+                          if (
+                            doc.status === "PROCESSING" ||
+                            doc.status === "QUEUED" ||
+                            doc.status === "PROCESSED"
+                          )
+                            return;
                           e.preventDefault();
                           setOpenMenuId(null);
                           handleProcess(doc);
                         }}
-                        disabled={doc.status === "PROCESSING" || doc.status === "QUEUED"}
+                        disabled={
+                          doc.status === "PROCESSING" ||
+                          doc.status === "QUEUED" ||
+                          doc.status === "PROCESSED"
+                        }
                         className="flex items-center gap-2 px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none data-[disabled]:opacity-50 data-[disabled]:cursor-not-allowed data-[disabled]:hover:bg-transparent data-[disabled]:pointer-events-none"
                       >
                         {(doc.status === "PROCESSING" || doc.status === "QUEUED") && (
@@ -621,10 +630,10 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                         )}
                         {doc.status === "PROCESSING" || doc.status === "QUEUED"
                           ? "Processing…"
-                          : doc.status === "FAILED"
-                            ? "Retry Processing"
-                            : doc.status === "PROCESSED"
-                              ? "Reprocess"
+                          : doc.status === "PROCESSED"
+                            ? "Processed"
+                            : doc.status === "FAILED"
+                              ? "Retry Processing"
                               : "Process"}
                       </DropdownMenu.Item>
                       <DropdownMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />
