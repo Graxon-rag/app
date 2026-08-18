@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Send,
   Loader2,
@@ -484,14 +484,26 @@ function QueryIndex({ doc_id: propDocId }: QueryIndexProps) {
     });
     if (data) setResponse(data as QueryResponse);
   };
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    navigate(`/organizations/${org_id}/projects/${project_id}?tab=documents`);
+  };
 
   const isExpert = queryType === QueryType.EXPERT;
   const hasLexicalChunks = !!response?.lexical_engine_chunk_ids?.length;
   const hasLexicalAnalysis = !!response?.lexical_engine_analysis;
 
   return (
-    <div className="space-y-6 max-w-[1650px] py-4 md:py-6 text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
+    <div className="space-y-6 max-w-[1650px] py-2 md:py-3 text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
       {/* ── Header ── */}
+      <button
+        type="button"
+        onClick={handleBack}
+        className="mb-4 inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium cursor-pointer text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
+      >
+        <ArrowLeft className="h-4 w-4" strokeWidth={2} /> Back to Documents
+      </button>
       <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-5 gap-4">
         <div>
           <h1 className="text-xl font-semibold flex items-center gap-2">
