@@ -637,6 +637,31 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                               : "Process"}
                       </DropdownMenu.Item>
                       <DropdownMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />
+                      <DropdownMenu.Item
+                        onClick={() =>
+                          navigate(
+                            `/organizations/${orgId}/projects/${projectId}/docs/${doc.id}/chunks`,
+                          )
+                        }
+                        className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none"
+                      >
+                        View Chunks
+                      </DropdownMenu.Item>
+
+                      <DropdownMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />
+
+                      <DropdownMenu.Item
+                        onClick={() =>
+                          navigate(
+                            `/organizations/${orgId}/projects/${projectId}/docs/${doc.id}/query`,
+                          )
+                        }
+                        disabled={doc.status !== "PROCESSED"}
+                        className="px-3 py-2 text-left text-sm rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 outline-none data-[disabled]:opacity-50 data-[disabled]:cursor-not-allowed data-[disabled]:hover:bg-transparent data-[disabled]:pointer-events-none"
+                      >
+                        Query
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Separator className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />
 
                       <DropdownMenu.Item
                         onClick={() =>

@@ -1,7 +1,6 @@
-import React from "react";
-
+import ChunkList from "@/components/document/ChunkList";
 function Chunks() {
-  return <div>Chunks</div>;
+  return <ChunkList />;
 }
 
 export default Chunks;
