@@ -81,7 +81,7 @@ function SparseTextModelIndex() {
           <select
             value={providerType}
             onChange={(e) => handleProviderTypeChange(e.target.value)}
-            className="h-9 px-3 rounded-lg border bg-white dark:bg-zinc-900 dark:border-zinc-800 text-sm"
+            className="h-9 px-3 rounded-lg cursor-pointer border bg-white dark:bg-zinc-900 dark:border-zinc-800 text-sm"
           >
             <option value={SparseModelProviderTypeInterface.LOCAL}>Local</option>
             <option value={SparseModelProviderTypeInterface.CLOUD}>Cloud</option>
@@ -91,7 +91,7 @@ function SparseTextModelIndex() {
           <select
             value={provider}
             onChange={(e) => handleProviderChange(e.target.value)}
-            className="h-9 px-3 rounded-lg border bg-white dark:bg-zinc-900 dark:border-zinc-800 text-sm"
+            className="h-9 px-3 rounded-lg cursor-pointer border bg-white dark:bg-zinc-900 dark:border-zinc-800 text-sm"
           >
             {providers.map((p) => (
               <option key={p} value={p}>
@@ -103,7 +103,7 @@ function SparseTextModelIndex() {
         {/* Create Button */}
         <button
           onClick={() => setOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50"
+          className="flex items-center cursor-pointer gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50"
         >
           <Plus size={14} />
           Add Model
@@ -126,7 +126,7 @@ function SparseTextModelIndex() {
 
           <button
             onClick={() => setOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 transition"
+            className="flex items-center cursor-pointer gap-2 px-5 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 transition"
           >
             <Sparkles size={14} />
             Add your first model
@@ -153,7 +153,7 @@ function SparseTextModelIndex() {
                       setConfirmDeleteId(model.id);
                       setDoubleConfirm(null);
                     }}
-                    className="text-red-500 hover:text-red-600 transition-colors"
+                    className="text-red-500 cursor-pointer hover:text-red-600 transition-colors"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -200,13 +200,13 @@ function SparseTextModelIndex() {
                       setConfirmDeleteId(null);
                       setDoubleConfirm(null);
                     }}
-                    className="text-xs text-zinc-400 hover:text-zinc-200 px-2 py-1"
+                    className="text-xs text-zinc-400 cursor-pointer hover:text-zinc-200 px-2 py-1"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={() => handleDelete(model.id)}
-                    className="text-xs bg-red-600/20 text-red-400 hover:bg-red-600/30 px-3 py-1 rounded-md transition-colors"
+                    className="text-xs bg-red-600/20 text-red-400 cursor-pointer hover:bg-red-600/30 px-3 py-1 rounded-md transition-colors"
                   >
                     {doubleConfirm === model.id ? "Click to confirm" : "Delete"}
                   </button>

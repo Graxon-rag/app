@@ -61,7 +61,7 @@ function VideoModelIndex() {
         <select
           value={provider}
           onChange={(e) => handleProviderChange(e.target.value)}
-          className="h-9 px-3 rounded-lg border bg-white dark:bg-zinc-900 dark:border-zinc-800"
+          className="h-9 px-3 cursor-pointer rounded-lg border bg-white dark:bg-zinc-900 dark:border-zinc-800"
         >
           {providers.map((p) => (
             <option key={p} value={p}>
@@ -74,7 +74,7 @@ function VideoModelIndex() {
         <button
           onClick={() => setOpen(true)}
           disabled={!provider}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50"
+          className="flex items-center cursor-pointer gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50"
         >
           <Plus size={14} />
           Add Model
@@ -100,7 +100,7 @@ function VideoModelIndex() {
           <button
             onClick={() => setOpen(true)}
             disabled={!provider}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50 transition"
+            className="flex items-center cursor-pointer gap-2 px-5 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50 transition"
           >
             <Sparkles size={14} />
             Add your first model
@@ -121,7 +121,10 @@ function VideoModelIndex() {
                   <p className="text-sm text-zinc-400">Model ID: {model.model_id}</p>
                 </div>
 
-                <button onClick={() => setConfirmDelete(model.id)} className="text-red-500">
+                <button
+                  onClick={() => setConfirmDelete(model.id)}
+                  className="text-red-500 cursor-pointer"
+                >
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -144,10 +147,16 @@ function VideoModelIndex() {
 
               {confirmDelete === model.id && (
                 <div className="flex justify-end gap-2 pt-2">
-                  <button onClick={() => setConfirmDelete(null)} className="text-sm text-zinc-500">
+                  <button
+                    onClick={() => setConfirmDelete(null)}
+                    className="text-sm cursor-pointer text-zinc-500"
+                  >
                     Cancel
                   </button>
-                  <button onClick={() => handleDelete(model.id)} className="text-sm text-red-500">
+                  <button
+                    onClick={() => handleDelete(model.id)}
+                    className="text-sm cursor-pointer text-red-500"
+                  >
                     {doubleConfirm === model.id ? "Click again to confirm" : "Delete"}
                   </button>
                 </div>

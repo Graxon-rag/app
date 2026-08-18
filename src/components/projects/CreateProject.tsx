@@ -1043,7 +1043,7 @@ export default function CreateProjectIndex() {
         <button
           onClick={handleSubmit}
           disabled={submitting}
-          className="w-full h-11 rounded-lg bg-black dark:bg-white text-white dark:text-black text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:active:scale-100"
+          className="w-full h-11 rounded-lg bg-black cursor-pointer dark:bg-white text-white dark:text-black text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:active:scale-100"
         >
           {submitting ? "Creating…" : "Create project"}
         </button>

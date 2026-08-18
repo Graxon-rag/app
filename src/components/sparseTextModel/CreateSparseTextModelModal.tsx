@@ -95,7 +95,7 @@ export default function CreateSparseTextModelModal({ open, onClose }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-zinc-100">Create Sparse Text Model</h2>
-          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-300">
+          <button onClick={onClose} className="text-zinc-400 cursor-pointer hover:text-zinc-300">
             ✕
           </button>
         </div>
@@ -115,7 +115,7 @@ export default function CreateSparseTextModelModal({ open, onClose }: Props) {
               name="provider_type"
               value={form.provider_type}
               onChange={handleChange}
-              className="w-1/3 h-10 px-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100"
+              className="w-1/3 h-10 cursor-pointer px-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100"
             >
               <option value={SparseModelProviderTypeInterface.LOCAL}>Local</option>
               <option value={SparseModelProviderTypeInterface.CLOUD}>Cloud</option>
@@ -125,7 +125,7 @@ export default function CreateSparseTextModelModal({ open, onClose }: Props) {
               name="provider"
               value={form.provider}
               onChange={handleChange}
-              className="w-2/3 h-10 px-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100"
+              className="w-2/3 h-10 px-3 cursor-pointer rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100"
             >
               <option value="" disabled>
                 Select Provider
@@ -196,14 +196,14 @@ export default function CreateSparseTextModelModal({ open, onClose }: Props) {
         <div className="flex justify-end gap-2 pt-2">
           <button
             onClick={onClose}
-            className="h-9 px-4 rounded-lg border border-zinc-800 text-zinc-300 hover:text-zinc-100 transition-colors"
+            className="h-9 px-4 cursor-pointer rounded-lg border border-zinc-800 text-zinc-300 hover:text-zinc-100 transition-colors"
           >
             Cancel
           </button>
 
           <button
             onClick={handleSubmit}
-            className="h-9 px-4 rounded-lg border border-zinc-800 text-zinc-300 hover:text-zinc-100 transition-colors"
+            className="h-9 px-4 cursor-pointer rounded-lg border border-zinc-800 text-zinc-300 hover:text-zinc-100 transition-colors"
           >
             Create
           </button>

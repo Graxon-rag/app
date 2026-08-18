@@ -93,7 +93,9 @@ export default function CreateReRankerModelModal({ open, onClose }: Props) {
       <div className="w-full max-w-lg rounded-xl border border-zinc-800 bg-zinc-950 p-5 space-y-4 shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-100">Create Re-Ranker Model</h2>
+          <h2 className="text-lg cursor-pointer font-semibold text-zinc-100">
+            Create Re-Ranker Model
+          </h2>
           <button onClick={onClose} className="text-zinc-400 hover:text-zinc-300">
             ✕
           </button>
@@ -114,7 +116,7 @@ export default function CreateReRankerModelModal({ open, onClose }: Props) {
               name="provider_type"
               value={form.provider_type}
               onChange={handleChange}
-              className="w-1/3 h-10 px-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100"
+              className="w-1/3 h-10 cursor-pointer px-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100"
             >
               <option value={RerankerModelProviderTypeInterface.CLOUD}>Cloud</option>
               <option value={RerankerModelProviderTypeInterface.LOCAL}>Local</option>
@@ -124,7 +126,7 @@ export default function CreateReRankerModelModal({ open, onClose }: Props) {
               name="provider"
               value={form.provider}
               onChange={handleChange}
-              className="w-2/3 h-10 px-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100"
+              className="w-2/3 h-10 cursor-pointer px-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100"
             >
               <option value="" disabled>
                 Select Provider
@@ -195,14 +197,14 @@ export default function CreateReRankerModelModal({ open, onClose }: Props) {
         <div className="flex justify-end gap-2 pt-2">
           <button
             onClick={onClose}
-            className="h-9 px-4 rounded-lg border border-zinc-800 text-zinc-300 hover:text-zinc-100 transition-colors"
+            className="h-9 px-4 cursor-pointer rounded-lg border border-zinc-800 text-zinc-300 hover:text-zinc-100 transition-colors"
           >
             Cancel
           </button>
 
           <button
             onClick={handleSubmit}
-            className="h-9 px-4 rounded-lg border border-zinc-800 text-zinc-300 hover:text-zinc-100 transition-colors"
+            className="h-9 px-4 cursor-pointer rounded-lg border border-zinc-800 text-zinc-300 hover:text-zinc-100 transition-colors"
           >
             Create
           </button>

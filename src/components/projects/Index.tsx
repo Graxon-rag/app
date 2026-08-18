@@ -27,7 +27,7 @@ function ProjectIndex() {
         {/* CREATE BUTTON */}
         <button
           onClick={() => navigate("create")}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700"
+          className="flex items-center cursor-pointer gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700"
         >
           <Plus size={14} />
           Create Project
@@ -51,7 +51,7 @@ function ProjectIndex() {
 
           <button
             onClick={() => navigate("create")}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 transition"
+            className="flex items-center cursor-pointer gap-2 px-5 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 transition"
           >
             <Sparkles size={14} />
             Create your first project

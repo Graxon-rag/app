@@ -60,7 +60,7 @@ function OrganizationIndex() {
 
         <button
           onClick={openModal}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition"
+          className="flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition"
         >
           <Plus size={16} />
           Create Org
@@ -96,7 +96,7 @@ function OrganizationIndex() {
               <div className="flex justify-end">
                 <button
                   onClick={() => setConfirmDeleteId(org.id)}
-                  className="text-red-500 hover:text-red-600"
+                  className="text-red-500 cursor-pointer hover:text-red-600"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -131,7 +131,7 @@ function OrganizationIndex() {
             <div className="flex justify-end gap-2">
               <button
                 onClick={closeModal}
-                className="px-3 py-2 rounded-lg border dark:border-zinc-700"
+                className="px-3 py-2 cursor-pointer rounded-lg border dark:border-zinc-700"
               >
                 Cancel
               </button>
@@ -139,7 +139,7 @@ function OrganizationIndex() {
               <button
                 onClick={handleCreate}
                 disabled={submitting}
-                className="px-3 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700"
+                className="px-3 py-2 rounded-lg cursor-pointer bg-primary-600 text-white hover:bg-primary-700"
               >
                 {submitting ? "Creating..." : "Create"}
               </button>
@@ -191,7 +191,7 @@ function OrganizationIndex() {
                   setConfirmDeleteId(null);
                   setDeleteInput("");
                 }}
-                className="px-3 py-2 rounded-lg border dark:border-zinc-700"
+                className="px-3 py-2 cursor-pointer rounded-lg border dark:border-zinc-700"
               >
                 Cancel
               </button>
@@ -205,7 +205,7 @@ function OrganizationIndex() {
                 disabled={
                   deleteInput !== `delete ${orgs.find((o) => o.id === confirmDeleteId)?.name}`
                 }
-                className="px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-40"
+                className="px-3 py-2 cursor-pointer rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-40"
               >
                 Delete
               </button>
