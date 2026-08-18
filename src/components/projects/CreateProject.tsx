@@ -11,6 +11,7 @@ import { useModelCredentialStore } from "@/store/modelCredentialStore";
 import { useModelProviderStore } from "@/store/modelProviderStore";
 import { useProjectStore } from "@/store/projectStore";
 import { TriangleAlert } from "lucide-react";
+import { ProjectVariablesSection } from "./VariablesSection";
 
 // ─── types ──────────────────────────────────────────────────────────────────
 type ProviderType = "local" | "cloud";
@@ -48,6 +49,7 @@ interface CreateProjectPayload {
   name: string;
   description: string;
   project_metadata: Record<string, unknown>;
+  variables: Record<string, unknown>;
   config: ProjectConfigCreatePayload;
 }
 
@@ -379,6 +381,7 @@ export default function CreateProjectIndex() {
   // ── basic info ─────────────────────────────────────────────────────────
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [variables, setVariables] = useState<Record<string, string | number>>({});
 
   // ── locked-at-creation toggles ────────────────────────────────────────
   const [graphDbEnable, setGraphDbEnable] = useState(true);
@@ -661,6 +664,7 @@ export default function CreateProjectIndex() {
       name: name.trim(),
       description: description.trim(),
       project_metadata: {},
+      variables: variables,
       config: {
         graph_db_enable: graphDbEnable,
         sparse_embedding_enable: sparseEmbeddingEnable,
@@ -1023,6 +1027,12 @@ export default function CreateProjectIndex() {
             </div>
           )}
         </div>
+
+        <ProjectVariablesSection
+          values={variables}
+          onInit={(defaults) => setVariables(defaults)}
+          onChange={(key, val) => setVariables((prev) => ({ ...prev, [key]: val }))}
+        />
 
         {formError && (
           <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">

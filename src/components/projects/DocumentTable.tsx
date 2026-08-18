@@ -288,6 +288,26 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
     }
   };
 
+  const handleDelete = async (id: string) => {
+    const sizeInBytes = sizeMbFilter
+      ? Math.round(parseFloat(sizeMbFilter) * 1024 * 1024)
+      : undefined;
+    const types =
+      categoryFilter && !typeFilter ? EXTENSION_CATEGORIES[categoryFilter]?.extensions : undefined;
+    await deleteDocument(orgId, projectId, id, {
+      page,
+      limit,
+      status: statusFilter || undefined,
+      name: nameFilter || undefined,
+      type: typeFilter || undefined,
+      types,
+      size: sizeInBytes,
+      size_op: sizeMbFilter ? sizeOpFilter : undefined,
+      sort_by: sortBy,
+      sort_order: sortOrder,
+    });
+  };
+
   return (
     <div className="space-y-3 mb-10 text-zinc-900 dark:text-zinc-100">
       {/* 1. FILTER CONTROLS TOOLBAR */}
@@ -624,8 +644,8 @@ function DocumentTable({ orgId, projectId }: { orgId: string; projectId: string 
                       <DropdownMenu.Item
                         onClick={async () => {
                           if (!confirm("Delete this document?")) return;
-                          await deleteDocument(orgId, projectId, doc.id);
-                          await handleRefresh();
+                          await handleDelete(doc.id);
+                          // await handleRefresh();
                         }}
                         className="px-3 py-2 text-left text-sm rounded-md cursor-pointer text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 outline-none"
                       >

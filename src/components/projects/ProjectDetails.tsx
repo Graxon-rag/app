@@ -6,8 +6,17 @@ import DocumentTable from "@/components/projects/DocumentTable";
 import QueryTab from "@/components/projects/QueryTab";
 import ConfigTab from "@/components/projects/ConfigTab";
 import WebhookTab from "@/components/projects/WebhookTab";
+import { VariablesDetailSection } from "./VariablesDetailSection";
 
-type TabKey = "details" | "config" | "query" | "upload" | "documents" | "webhooks" | "danger-zone";
+type TabKey =
+  | "details"
+  | "config"
+  | "variables"
+  | "query"
+  | "upload"
+  | "documents"
+  | "webhooks"
+  | "danger-zone";
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "details", label: "Details" },
@@ -15,6 +24,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "upload", label: "Upload" },
   { key: "documents", label: "Documents" },
   { key: "config", label: "Config" },
+  { key: "variables", label: "Variables" },
   { key: "webhooks", label: "Webhooks" },
   { key: "danger-zone", label: "Danger Zone" },
 ];
@@ -130,6 +140,11 @@ function ProjectDetails() {
         {/* CONFIG TAB */}
         {tab === "config" && org_id && project_id && (
           <ConfigTab orgId={org_id} projectId={project_id} />
+        )}
+
+        {/* VARIABLES TAB */}
+        {tab === "variables" && org_id && project_id && (
+          <VariablesDetailSection orgId={org_id} projectId={project_id} />
         )}
 
         {/* QUERY TAB */}

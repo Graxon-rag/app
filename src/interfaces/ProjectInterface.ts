@@ -314,7 +314,14 @@ export interface CreateProjectInterface {
   name: string;
   description: string;
   config: ProjectConfigCreateInterface;
+  variables: Record<string, unknown>;
   project_metadata?: any;
+}
+
+export interface DefaultVariableItem {
+  key: string;
+  value: string | number;
+  description: string;
 }
 
 // {

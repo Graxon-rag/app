@@ -5,6 +5,7 @@ import {
   ProjectConfigDetailInterface,
   ProjectConfigGetInterface,
   ProjectConfigUpdateInterface,
+  DefaultVariableItem,
 } from "@/interfaces/ProjectInterface";
 import { axiosClient } from "@/utils/axiosClient";
 
@@ -31,6 +32,11 @@ interface ProjectStore {
     configId: string,
     payload: ProjectConfigUpdateInterface,
   ) => Promise<ProjectConfigGetInterface>;
+  getProjectVariableDefaults: () => Promise<DefaultVariableItem[]>;
+  getProjectVariablesByProject: (
+    orgId: string,
+    projectId: string,
+  ) => Promise<Record<string, string | number> | null>;
 }
 
 export const useProjectStore = create<ProjectStore>((set, get) => ({
@@ -137,6 +143,26 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       return data;
     } catch (error) {
       console.log(error);
+    }
+  },
+  getProjectVariableDefaults: async () => {
+    try {
+      const url = "/api/project-variables/default";
+      const response = await axiosClient.get(url);
+      return response.data?.data?.data ?? [];
+    } catch (error) {
+      console.error("Failed to fetch project variable defaults", error);
+      return [];
+    }
+  },
+  getProjectVariablesByProject: async (orgId: string, projectId: string) => {
+    try {
+      const url = `/api/project-variables/${orgId}/${projectId}`;
+      const response = await axiosClient.get(url);
+      return response.data?.data ?? null;
+    } catch (error) {
+      console.error("Failed to fetch project-specific variables", error);
+      return null;
     }
   },
 }));

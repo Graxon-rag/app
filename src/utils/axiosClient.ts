@@ -10,7 +10,7 @@ axiosClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<{ message?: string; error?: string; detail?: string }>) => {
     // Skip global toast for 401 — handle auth/redirect separately
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 || error.response?.status === 404) {
       return Promise.reject(error);
     }
 
