@@ -30,29 +30,66 @@ export default function Chunks() {
 
   const page = parseInt(searchParams.get("page") || "1", 10);
   const limit = parseInt(searchParams.get("limit") || "10", 10);
-  const searchParam = searchParams.get("search") || "";
 
   // Sorting params
   const sortBy = searchParams.get("sort_by") || "chunk_number";
-  const sortOrder = searchParams.get("sort_order") || "desc";
+  const sortOrder = searchParams.get("sort_order") || "asc";
 
-  // Local state for the search input to allow smooth typing before updating URL
-  const [searchInput, setSearchInput] = useState(searchParam);
+  // Determine active search type from URL
+  const urlSearch = searchParams.get("search") || "";
+  const urlChunkNum = searchParams.get("chunk_number") || "";
+  const urlChunkId = searchParams.get("chunk_id") || "";
+  const urlUuid = searchParams.get("id") || "";
+
+  const initialSearchType = urlChunkNum
+    ? "chunk_number"
+    : urlChunkId
+      ? "chunk_id"
+      : urlUuid
+        ? "id"
+        : "search";
+  const initialSearchValue = urlChunkNum || urlChunkId || urlUuid || urlSearch;
+
+  // Local state for the search input
+  const [searchType, setSearchType] = useState(initialSearchType);
+  const [searchInput, setSearchInput] = useState(initialSearchValue);
 
   // Inline debounce: Sync search input to URL with a slight delay
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (searchInput !== searchParam) {
-        setSearchParams((prev) => {
-          if (searchInput) prev.set("search", searchInput);
-          else prev.delete("search");
-          prev.set("page", "1"); // Reset to page 1 on new search
+      setSearchParams((prev) => {
+        // 1. Check what is currently in the URL
+        const activeSearchInUrl = prev.get(searchType) || "";
+
+        // 2. Check if there are any old search categories stuck in the URL
+        const hasStrayParams =
+          (searchType !== "search" && prev.has("search")) ||
+          (searchType !== "chunk_number" && prev.has("chunk_number")) ||
+          (searchType !== "chunk_id" && prev.has("chunk_id")) ||
+          (searchType !== "id" && prev.has("id"));
+
+        // 3. IF the user hasn't typed anything new AND there are no old params to clean up, DO NOTHING.
+        if (searchInput === activeSearchInUrl && !hasStrayParams) {
           return prev;
-        });
-      }
+        }
+
+        // 4. OTHERWISE, apply the new search and safely reset to Page 1
+        prev.delete("search");
+        prev.delete("chunk_number");
+        prev.delete("chunk_id");
+        prev.delete("id");
+
+        if (searchInput) {
+          prev.set(searchType, searchInput);
+        }
+
+        prev.set("page", "1"); // Only reset to page 1 when an ACTUAL new search occurs
+        return prev;
+      });
     }, 400);
+
     return () => clearTimeout(handler);
-  }, [searchInput, searchParam, setSearchParams]);
+  }, [searchInput, searchType, setSearchParams]);
 
   // Fetch data whenever URL params change
   useEffect(() => {
@@ -63,17 +100,16 @@ export default function Chunks() {
         doc_id,
         page,
         limit,
-        searchParam,
-        undefined, // chunk_number (could also add UI for this if needed)
-        undefined, // chunk_id
-        undefined, // id
+        searchParams.get("search") || undefined,
+        searchParams.get("chunk_number") ? Number(searchParams.get("chunk_number")) : undefined,
+        searchParams.get("chunk_id") || undefined,
+        searchParams.get("id") || undefined,
         sortBy,
         sortOrder,
       );
     }
-  }, [org_id, project_id, doc_id, page, limit, searchParam, sortBy, sortOrder, fetchChunks]);
+  }, [org_id, project_id, doc_id, page, limit, searchParams, sortBy, sortOrder, fetchChunks]);
 
-  // --- Parameter Updaters ---
   const handleLimitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSearchParams((prev) => {
       prev.set("limit", e.target.value);
@@ -82,15 +118,19 @@ export default function Chunks() {
     });
   };
 
-  // NEW: Handler for Sort Dropdown
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const [newSortBy, newSortOrder] = e.target.value.split("-");
     setSearchParams((prev) => {
       prev.set("sort_by", newSortBy);
       prev.set("sort_order", newSortOrder);
-      prev.set("page", "1"); // Reset to page 1 on sort change
+      prev.set("page", "1");
       return prev;
     });
+  };
+
+  const handleSearchTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSearchType(e.target.value);
+    setSearchInput("");
   };
 
   const handleNextPage = () => {
@@ -187,55 +227,118 @@ export default function Chunks() {
         </div>
 
         {/* --- Top Toolbar: Filters, Pagination, Actions --- */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm">
-          {/* Left: Filters & Search */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Search Input */}
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search chunks text..."
-                className="w-full h-9 pl-9 pr-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-sm text-black dark:text-white outline-none focus:border-indigo-500 transition-colors"
-              />
-            </div>
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm">
+          {/* Left: Expanded Search */}
+          <div className="w-full xl:max-w-lg flex-1">
+            <div className="flex items-center gap-0 w-full rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-700 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-shadow">
+              <select
+                value={searchType}
+                onChange={handleSearchTypeChange}
+                className="h-9 pl-3 pr-1 rounded-l-lg bg-zinc-100 dark:bg-zinc-800 text-xs font-medium text-zinc-700 dark:text-zinc-200 border-none outline-none cursor-pointer"
+              >
+                <option
+                  value="search"
+                  className="bg-white dark:bg-zinc-800 text-black dark:text-white"
+                >
+                  Text
+                </option>
+                <option
+                  value="chunk_number"
+                  className="bg-white dark:bg-zinc-800 text-black dark:text-white"
+                >
+                  Chunk #
+                </option>
+                <option
+                  value="chunk_id"
+                  className="bg-white dark:bg-zinc-800 text-black dark:text-white"
+                >
+                  Chunk ID
+                </option>
+                <option value="id" className="bg-white dark:bg-zinc-800 text-black dark:text-white">
+                  UUID
+                </option>
+              </select>
 
-            {/* NEW: Sort Dropdown */}
+              <div className="w-px h-5 bg-zinc-300 dark:bg-zinc-700"></div>
+
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                <input
+                  type={searchType === "chunk_number" ? "number" : "text"}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder={`Search by ${searchType.replace("_", " ")}...`}
+                  className="w-full h-9 pl-9 pr-3 rounded-r-lg bg-transparent text-sm text-black dark:text-white border-none outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Sort, Limit, Pagination & Add */}
+          <div className="flex flex-wrap items-center gap-4 xl:gap-3">
+            {/* Sort Dropdown */}
             <div className="flex items-center gap-2">
               <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Sort:</label>
               <select
                 value={`${sortBy}-${sortOrder}`}
                 onChange={handleSortChange}
-                className="h-9 px-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-sm text-black dark:text-white outline-none focus:border-indigo-500 cursor-pointer"
+                className="h-9 px-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-sm text-black dark:text-white outline-none focus:border-indigo-500 cursor-pointer"
               >
-                <option value="chunk_number-asc">Sequential</option>
-                <option value="chunk_number-desc">Reverse Sequential</option>
-                <option value="created_at-desc">Newest First</option>
-                <option value="created_at-asc">Oldest First</option>
+                <option
+                  value="chunk_number-asc"
+                  className="bg-white dark:bg-zinc-800 text-black dark:text-white"
+                >
+                  Sequential
+                </option>
+                <option
+                  value="chunk_number-desc"
+                  className="bg-white dark:bg-zinc-800 text-black dark:text-white"
+                >
+                  Reverse
+                </option>
+                <option
+                  value="created_at-desc"
+                  className="bg-white dark:bg-zinc-800 text-black dark:text-white"
+                >
+                  Newest First
+                </option>
+                <option
+                  value="created_at-asc"
+                  className="bg-white dark:bg-zinc-800 text-black dark:text-white"
+                >
+                  Oldest First
+                </option>
               </select>
             </div>
 
             {/* Limit Dropdown */}
             <div className="flex items-center gap-2">
-              <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Show:</label>
+              <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Limit:</label>
               <select
                 value={limit}
                 onChange={handleLimitChange}
-                className="h-9 px-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-sm text-black dark:text-white outline-none focus:border-indigo-500 cursor-pointer"
+                className="h-9 px-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-sm text-black dark:text-white outline-none focus:border-indigo-500 cursor-pointer"
               >
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="30">30</option>
-                <option value="50">50</option>
+                <option value="5" className="bg-white dark:bg-zinc-800 text-black dark:text-white">
+                  5
+                </option>
+                <option value="10" className="bg-white dark:bg-zinc-800 text-black dark:text-white">
+                  10
+                </option>
+                <option value="20" className="bg-white dark:bg-zinc-800 text-black dark:text-white">
+                  20
+                </option>
+                <option value="30" className="bg-white dark:bg-zinc-800 text-black dark:text-white">
+                  30
+                </option>
+                <option value="50" className="bg-white dark:bg-zinc-800 text-black dark:text-white">
+                  50
+                </option>
               </select>
             </div>
-          </div>
 
-          {/* Right: Pagination & Add Button */}
-          <div className="flex items-center gap-4 border-t border-zinc-100 dark:border-zinc-800/50 lg:border-none pt-3 lg:pt-0">
+            <div className="hidden sm:block w-px h-6 bg-zinc-200 dark:bg-zinc-800"></div>
+
             {/* Pagination Controls */}
             {pagination && (
               <div className="flex items-center gap-3">
@@ -261,8 +364,7 @@ export default function Chunks() {
               </div>
             )}
 
-            {/* Divider */}
-            <div className="hidden lg:block w-px h-6 bg-zinc-200 dark:bg-zinc-800"></div>
+            <div className="hidden sm:block w-px h-6 bg-zinc-200 dark:bg-zinc-800"></div>
 
             {/* Add Chunk Button */}
             <button
@@ -302,7 +404,6 @@ export default function Chunks() {
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-zinc-200 dark:border-zinc-800 flex flex-col max-h-[90vh]">
-            {/* Modal Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/50">
               <h2 className="text-lg font-semibold text-black dark:text-white">Add Manual Chunk</h2>
               <button
@@ -314,7 +415,6 @@ export default function Chunks() {
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="flex-1 overflow-y-auto p-5 space-y-4">
               {addError && (
                 <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-lg">
@@ -361,7 +461,6 @@ export default function Chunks() {
               </div>
             </div>
 
-            {/* Modal Footer */}
             <div className="p-5 border-t border-zinc-100 dark:border-zinc-800/50 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-b-xl">
               {showAddConfirm ? (
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg animate-in slide-in-from-bottom-2">
