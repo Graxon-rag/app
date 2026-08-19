@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   Plus,
   Loader2,
@@ -9,6 +9,7 @@ import {
   ArrowLeft,
   X,
   TriangleAlert,
+  Search,
 } from "lucide-react";
 import { useChunkStore } from "@/store/chunkStore";
 import { ChunkCard } from "./ChunkCard";
@@ -21,37 +22,92 @@ export default function Chunks() {
     doc_id: string;
   }>();
 
+  const navigate = useNavigate();
   const { chunks, pagination, isLoading, fetchChunks } = useChunkStore();
 
-  // Local state for pagination
-  const [page, setPage] = useState(1);
-  const limit = 10;
+  // --- URL Search Params State ---
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Local state for Add Chunk Modal
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [addText, setAddText] = useState("");
-  const [addFileChunkNumber, setAddFileChunkNumber] = useState(0);
-  const [addMetadataStr, setAddMetadataStr] = useState("{\n  \n}");
-  const [showAddConfirm, setShowAddConfirm] = useState(false);
-  const [addError, setAddError] = useState("");
+  const page = parseInt(searchParams.get("page") || "1", 10);
+  const limit = parseInt(searchParams.get("limit") || "10", 10);
+  const searchParam = searchParams.get("search") || "";
 
-  const navigate = useNavigate();
+  // Sorting params
+  const sortBy = searchParams.get("sort_by") || "chunk_number";
+  const sortOrder = searchParams.get("sort_order") || "desc";
 
+  // Local state for the search input to allow smooth typing before updating URL
+  const [searchInput, setSearchInput] = useState(searchParam);
+
+  // Inline debounce: Sync search input to URL with a slight delay
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (searchInput !== searchParam) {
+        setSearchParams((prev) => {
+          if (searchInput) prev.set("search", searchInput);
+          else prev.delete("search");
+          prev.set("page", "1"); // Reset to page 1 on new search
+          return prev;
+        });
+      }
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchInput, searchParam, setSearchParams]);
+
+  // Fetch data whenever URL params change
   useEffect(() => {
     if (org_id && project_id && doc_id) {
-      fetchChunks(org_id, project_id, doc_id, page, limit);
+      fetchChunks(
+        org_id,
+        project_id,
+        doc_id,
+        page,
+        limit,
+        searchParam,
+        undefined, // chunk_number (could also add UI for this if needed)
+        undefined, // chunk_id
+        undefined, // id
+        sortBy,
+        sortOrder,
+      );
     }
-  }, [org_id, project_id, doc_id, page, limit, fetchChunks]);
+  }, [org_id, project_id, doc_id, page, limit, searchParam, sortBy, sortOrder, fetchChunks]);
+
+  // --- Parameter Updaters ---
+  const handleLimitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSearchParams((prev) => {
+      prev.set("limit", e.target.value);
+      prev.set("page", "1");
+      return prev;
+    });
+  };
+
+  // NEW: Handler for Sort Dropdown
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const [newSortBy, newSortOrder] = e.target.value.split("-");
+    setSearchParams((prev) => {
+      prev.set("sort_by", newSortBy);
+      prev.set("sort_order", newSortOrder);
+      prev.set("page", "1"); // Reset to page 1 on sort change
+      return prev;
+    });
+  };
 
   const handleNextPage = () => {
     if (pagination && page < pagination.total_pages) {
-      setPage((prev) => prev + 1);
+      setSearchParams((prev) => {
+        prev.set("page", (page + 1).toString());
+        return prev;
+      });
     }
   };
 
   const handlePrevPage = () => {
     if (page > 1) {
-      setPage((prev) => prev - 1);
+      setSearchParams((prev) => {
+        prev.set("page", (page - 1).toString());
+        return prev;
+      });
     }
   };
 
@@ -59,7 +115,14 @@ export default function Chunks() {
     navigate(`/organizations/${org_id}/projects/${project_id}?tab=documents`);
   };
 
-  // --- Add Chunk Handlers ---
+  // --- Add Chunk Modal State & Handlers ---
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addText, setAddText] = useState("");
+  const [addFileChunkNumber, setAddFileChunkNumber] = useState(0);
+  const [addMetadataStr, setAddMetadataStr] = useState("{\n  \n}");
+  const [showAddConfirm, setShowAddConfirm] = useState(false);
+  const [addError, setAddError] = useState("");
+
   const handleCloseAddModal = () => {
     setIsAddModalOpen(false);
     setShowAddConfirm(false);
@@ -75,8 +138,6 @@ export default function Chunks() {
       setAddError("Chunk text is required.");
       return;
     }
-
-    // Validate JSON if provided
     if (addMetadataStr.trim() && addMetadataStr.trim() !== "{}") {
       try {
         JSON.parse(addMetadataStr);
@@ -85,7 +146,6 @@ export default function Chunks() {
         return;
       }
     }
-
     setShowAddConfirm(true);
   };
 
@@ -94,16 +154,13 @@ export default function Chunks() {
     if (addMetadataStr.trim() && addMetadataStr.trim() !== "{}") {
       parsedMetadata = JSON.parse(addMetadataStr);
     }
-
     const payload: ChunkCreateInterface = {
       text: addText,
       file_chunk_number: addFileChunkNumber,
       metadata: parsedMetadata,
     };
-
     console.log("Mock Add Chunk Payload:", payload);
     alert("Chunk logged to console successfully!");
-
     handleCloseAddModal();
   };
 
@@ -112,31 +169,110 @@ export default function Chunks() {
       <button
         type="button"
         onClick={handleBack}
-        className="mb-4 inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium cursor-pointer text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
+        className="mb-4 inline-flex items-center gap-2 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm font-medium cursor-pointer text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors shadow-sm"
       >
         <ArrowLeft className="h-4 w-4" strokeWidth={2} /> Back to Documents
       </button>
 
-      <div className="max-w-[95%] mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-black dark:text-white flex items-center gap-2">
-              <Database className="w-5 h-5 text-indigo-500" />
-              Document Chunks
-            </h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-              Manage and edit parsed chunks for this document.
-            </p>
+      <div className="max-w-[95%] mx-auto space-y-4">
+        {/* Header Title */}
+        <div>
+          <h1 className="text-xl font-semibold text-black dark:text-white flex items-center gap-2">
+            <Database className="w-5 h-5 text-indigo-500" />
+            Document Chunks
+          </h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+            Manage, search, and edit parsed chunks for this document.
+          </p>
+        </div>
+
+        {/* --- Top Toolbar: Filters, Pagination, Actions --- */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm">
+          {/* Left: Filters & Search */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Search Input */}
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Search chunks text..."
+                className="w-full h-9 pl-9 pr-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-sm text-black dark:text-white outline-none focus:border-indigo-500 transition-colors"
+              />
+            </div>
+
+            {/* NEW: Sort Dropdown */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Sort:</label>
+              <select
+                value={`${sortBy}-${sortOrder}`}
+                onChange={handleSortChange}
+                className="h-9 px-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-sm text-black dark:text-white outline-none focus:border-indigo-500 cursor-pointer"
+              >
+                <option value="chunk_number-asc">Sequential</option>
+                <option value="chunk_number-desc">Reverse Sequential</option>
+                <option value="created_at-desc">Newest First</option>
+                <option value="created_at-asc">Oldest First</option>
+              </select>
+            </div>
+
+            {/* Limit Dropdown */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Show:</label>
+              <select
+                value={limit}
+                onChange={handleLimitChange}
+                className="h-9 px-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-sm text-black dark:text-white outline-none focus:border-indigo-500 cursor-pointer"
+              >
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="50">50</option>
+              </select>
+            </div>
           </div>
 
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 cursor-pointer bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-lg hover:opacity-90 active:scale-[0.98] transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            Add Chunk
-          </button>
+          {/* Right: Pagination & Add Button */}
+          <div className="flex items-center gap-4 border-t border-zinc-100 dark:border-zinc-800/50 lg:border-none pt-3 lg:pt-0">
+            {/* Pagination Controls */}
+            {pagination && (
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+                  Page {pagination.current_page} of {pagination.total_pages || 1}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={handlePrevPage}
+                    disabled={page === 1}
+                    className="p-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={handleNextPage}
+                    disabled={page >= (pagination.total_pages || 1)}
+                    className="p-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Divider */}
+            <div className="hidden lg:block w-px h-6 bg-zinc-200 dark:bg-zinc-800"></div>
+
+            {/* Add Chunk Button */}
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 cursor-pointer bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-lg hover:opacity-90 active:scale-[0.98] transition-all shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              Add Chunk
+            </button>
+          </div>
         </div>
 
         {/* Content State */}
@@ -150,39 +286,14 @@ export default function Chunks() {
             <Database className="w-10 h-10 text-zinc-300 dark:text-zinc-700 mb-4" />
             <h3 className="text-sm font-medium text-black dark:text-white">No chunks found</h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-              This document hasn't been chunked yet or the parser returned no text.
+              Try adjusting your filters or add a new chunk manually.
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 pb-10">
             {chunks.map((chunk) => (
               <ChunkCard key={chunk.id || chunk.chunk_id} chunk={chunk} />
             ))}
-          </div>
-        )}
-
-        {/* Pagination Controls */}
-        {!isLoading && pagination && pagination.total_pages > 1 && (
-          <div className="flex items-center justify-between pt-6 border-t border-zinc-200 dark:border-zinc-800">
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Showing page {pagination.current_page} of {pagination.total_pages}
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handlePrevPage}
-                disabled={page === 1}
-                className="p-2 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                onClick={handleNextPage}
-                disabled={page >= pagination.total_pages}
-                className="p-2 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
           </div>
         )}
       </div>
