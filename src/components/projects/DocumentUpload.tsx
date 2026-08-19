@@ -294,7 +294,8 @@ export function DocumentUpload({ orgId, projectId }: { orgId: string; projectId:
             Select or drag & drop your file
           </h2>
           <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 text-center max-w-sm">
-            Supported formats include PDFs, docs, sheets, slides, images, audio & video
+            Supported formats include Structure, Unstructured, Code, Txt, MD, PDFs, docs, sheets,
+            slides, images, audio & video and more....
           </p>
 
           {status === "idle" && (

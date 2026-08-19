@@ -1,8 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Plus, Loader2, Database, ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
+import {
+  Plus,
+  Loader2,
+  Database,
+  ChevronLeft,
+  ChevronRight,
+  ArrowLeft,
+  X,
+  TriangleAlert,
+} from "lucide-react";
 import { useChunkStore } from "@/store/chunkStore";
 import { ChunkCard } from "./ChunkCard";
+import { ChunkCreateInterface } from "@/interfaces/ChunkInterface";
 
 export default function Chunks() {
   const { org_id, project_id, doc_id } = useParams<{
@@ -16,6 +26,16 @@ export default function Chunks() {
   // Local state for pagination
   const [page, setPage] = useState(1);
   const limit = 10;
+
+  // Local state for Add Chunk Modal
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addText, setAddText] = useState("");
+  const [addFileChunkNumber, setAddFileChunkNumber] = useState(0);
+  const [addMetadataStr, setAddMetadataStr] = useState("{\n  \n}");
+  const [showAddConfirm, setShowAddConfirm] = useState(false);
+  const [addError, setAddError] = useState("");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (org_id && project_id && doc_id) {
@@ -34,14 +54,61 @@ export default function Chunks() {
       setPage((prev) => prev - 1);
     }
   };
-  const navigate = useNavigate();
 
   const handleBack = () => {
     navigate(`/organizations/${org_id}/projects/${project_id}?tab=documents`);
   };
 
+  // --- Add Chunk Handlers ---
+  const handleCloseAddModal = () => {
+    setIsAddModalOpen(false);
+    setShowAddConfirm(false);
+    setAddError("");
+    setAddText("");
+    setAddFileChunkNumber(0);
+    setAddMetadataStr("{\n  \n}");
+  };
+
+  const handleAddInitiateSave = () => {
+    setAddError("");
+    if (!addText.trim()) {
+      setAddError("Chunk text is required.");
+      return;
+    }
+
+    // Validate JSON if provided
+    if (addMetadataStr.trim() && addMetadataStr.trim() !== "{}") {
+      try {
+        JSON.parse(addMetadataStr);
+      } catch (err) {
+        setAddError("Invalid JSON format in metadata.");
+        return;
+      }
+    }
+
+    setShowAddConfirm(true);
+  };
+
+  const handleAddConfirmSave = () => {
+    let parsedMetadata = undefined;
+    if (addMetadataStr.trim() && addMetadataStr.trim() !== "{}") {
+      parsedMetadata = JSON.parse(addMetadataStr);
+    }
+
+    const payload: ChunkCreateInterface = {
+      text: addText,
+      file_chunk_number: addFileChunkNumber,
+      metadata: parsedMetadata,
+    };
+
+    console.log("Mock Add Chunk Payload:", payload);
+    alert("Chunk logged to console successfully!");
+
+    handleCloseAddModal();
+  };
+
   return (
-    <div className="min-h-full bg-zinc-50 dark:bg-black p-3">
+    <div className="min-h-full bg-zinc-50 dark:bg-black p-3 relative">
       <button
         type="button"
         onClick={handleBack}
@@ -64,7 +131,7 @@ export default function Chunks() {
           </div>
 
           <button
-            onClick={() => alert("Add chunk feature coming soon!")}
+            onClick={() => setIsAddModalOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2 cursor-pointer bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-lg hover:opacity-90 active:scale-[0.98] transition-all"
           >
             <Plus className="w-4 h-4" />
@@ -119,6 +186,115 @@ export default function Chunks() {
           </div>
         )}
       </div>
+
+      {/* --- Add Chunk Modal --- */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-zinc-200 dark:border-zinc-800 flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/50">
+              <h2 className="text-lg font-semibold text-black dark:text-white">Add Manual Chunk</h2>
+              <button
+                onClick={handleCloseAddModal}
+                disabled={showAddConfirm}
+                className="p-1 text-zinc-400 hover:text-black dark:hover:text-white rounded-md transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              {addError && (
+                <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-lg">
+                  {addError}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">
+                  File Chunk Number
+                </label>
+                <input
+                  type="number"
+                  disabled={showAddConfirm}
+                  value={addFileChunkNumber}
+                  onChange={(e) => setAddFileChunkNumber(Number(e.target.value))}
+                  className="w-full h-9 px-3 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 text-sm text-black dark:text-white outline-none focus:border-indigo-500 disabled:opacity-50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">
+                  Chunk Text <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={addText}
+                  onChange={(e) => setAddText(e.target.value)}
+                  disabled={showAddConfirm}
+                  placeholder="Enter the raw text content..."
+                  className="w-full min-h-[150px] p-3 text-sm text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg outline-none focus:border-indigo-500 disabled:opacity-50 resize-y"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">
+                  Metadata (JSON format)
+                </label>
+                <textarea
+                  value={addMetadataStr}
+                  onChange={(e) => setAddMetadataStr(e.target.value)}
+                  disabled={showAddConfirm}
+                  className="w-full h-24 p-3 font-mono text-xs text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg outline-none focus:border-indigo-500 disabled:opacity-50 resize-y"
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-5 border-t border-zinc-100 dark:border-zinc-800/50 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-b-xl">
+              {showAddConfirm ? (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg animate-in slide-in-from-bottom-2">
+                  <div className="flex items-center gap-2.5 text-amber-800 dark:text-amber-400">
+                    <TriangleAlert className="w-4 h-4 shrink-0" />
+                    <p className="text-xs font-medium leading-snug">
+                      Confirm creation? This will be injected directly into the document.
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-end gap-2 shrink-0">
+                    <button
+                      onClick={() => setShowAddConfirm(false)}
+                      className="px-3 py-1.5 text-xs font-medium text-amber-800 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40 rounded-md transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleAddConfirmSave}
+                      className="px-3 py-1.5 text-xs font-medium text-white bg-amber-600 hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600 rounded-md transition-colors shadow-sm cursor-pointer"
+                    >
+                      Yes, create
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={handleCloseAddModal}
+                    className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAddInitiateSave}
+                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors cursor-pointer"
+                  >
+                    Save Chunk
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
