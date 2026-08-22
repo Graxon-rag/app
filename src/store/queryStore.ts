@@ -104,26 +104,49 @@ export const useQueryStore = create<QueryStore>((set, get) => ({
           buffer = buffer.slice(eventIndex + 2);
 
           let eventType = "message";
-          let eventData = "";
+          // IMPORTANT: eventData accumulates ALL "data:" lines in this chunk,
+          // joined with "\n", per the SSE spec. A single chunk can legitimately
+          // contain multiple "data:" lines (e.g. multi-line tokens).
+          const dataLines: string[] = [];
 
           const lines = chunk.split("\n");
           for (const line of lines) {
-            if (line.startsWith("event: ")) eventType = line.substring(7).trim();
-            else if (line.startsWith("data: ")) eventData = line.substring(6).trim();
+            if (line.startsWith("event: ")) {
+              // Safe to trim: event names ("token", "thinking", "tool_call", ...)
+              // never carry meaningful leading/trailing whitespace.
+              eventType = line.substring(7).trim();
+            } else if (line.startsWith("event:")) {
+              eventType = line.substring(6).trim();
+            } else if (line.startsWith("data: ")) {
+              // DO NOT trim — this is the actual token payload. Trimming here
+              // silently deletes spaces/newlines between words and paragraphs,
+              // which breaks both plain-text readability and Markdown block
+              // structure (headings, lists, blank-line-separated paragraphs).
+              dataLines.push(line.substring(6));
+            } else if (line.startsWith("data:")) {
+              dataLines.push(line.substring(5));
+            }
           }
+
+          const eventData = dataLines.join("\n");
 
           let parsedData: any = eventData;
           try {
             parsedData = JSON.parse(eventData);
           } catch (e) {
-            /* ignore JSON error for pure text */
+            /* ignore JSON error for pure text — eventData is used as-is,
+               with its original whitespace intact */
           }
 
           // Update store incrementally based on SSE type
           if (eventType === "thinking") {
-            set((state) => ({ streamedThinking: state.streamedThinking + (parsedData || "") }));
+            set((state) => ({
+              streamedThinking: state.streamedThinking + (parsedData ?? ""),
+            }));
           } else if (eventType === "token") {
-            set((state) => ({ streamedAnswer: state.streamedAnswer + (parsedData || "") }));
+            set((state) => ({
+              streamedAnswer: state.streamedAnswer + (parsedData ?? ""),
+            }));
           } else if (eventType === "tool_call") {
             set((state) => ({
               toolSteps: [
