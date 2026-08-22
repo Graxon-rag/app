@@ -22,8 +22,12 @@ export default function Chunks() {
     doc_id: string;
   }>();
 
+  if (!org_id || !project_id || !doc_id) {
+    return <div>Invalid url parameters</div>;
+  }
+
   const navigate = useNavigate();
-  const { chunks, pagination, isLoading, fetchChunks } = useChunkStore();
+  const { chunks, pagination, isLoading, fetchChunks, addChunk } = useChunkStore();
 
   // --- URL Search Params State ---
   const [searchParams, setSearchParams] = useSearchParams();
@@ -49,6 +53,8 @@ export default function Chunks() {
         ? "id"
         : "search";
   const initialSearchValue = urlChunkNum || urlChunkId || urlUuid || urlSearch;
+
+  const [isSaving, setIsSaving] = useState(false);
 
   // Local state for the search input
   const [searchType, setSearchType] = useState(initialSearchType);
@@ -189,19 +195,38 @@ export default function Chunks() {
     setShowAddConfirm(true);
   };
 
-  const handleAddConfirmSave = () => {
-    let parsedMetadata = undefined;
-    if (addMetadataStr.trim() && addMetadataStr.trim() !== "{}") {
-      parsedMetadata = JSON.parse(addMetadataStr);
+  const handleAddConfirmSave = async () => {
+    try {
+      setIsSaving(true);
+      let parsedMetadata = undefined;
+      if (addMetadataStr.trim() && addMetadataStr.trim() !== "{}") {
+        parsedMetadata = JSON.parse(addMetadataStr);
+      }
+      const payload: ChunkCreateInterface = {
+        text: addText,
+        file_chunk_number: addFileChunkNumber,
+        metadata: parsedMetadata,
+      };
+      await addChunk(org_id, project_id, doc_id, payload);
+      fetchChunks(
+        org_id,
+        project_id,
+        doc_id,
+        page,
+        limit,
+        searchParams.get("search") || undefined,
+        searchParams.get("chunk_number") ? Number(searchParams.get("chunk_number")) : undefined,
+        searchParams.get("chunk_id") || undefined,
+        searchParams.get("id") || undefined,
+        sortBy,
+        sortOrder,
+      );
+      handleCloseAddModal();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSaving(false);
     }
-    const payload: ChunkCreateInterface = {
-      text: addText,
-      file_chunk_number: addFileChunkNumber,
-      metadata: parsedMetadata,
-    };
-    console.log("Mock Add Chunk Payload:", payload);
-    alert("Chunk logged to console successfully!");
-    handleCloseAddModal();
   };
 
   return (
@@ -394,7 +419,13 @@ export default function Chunks() {
         ) : (
           <div className="space-y-4 pb-10">
             {chunks.map((chunk) => (
-              <ChunkCard key={chunk.id || chunk.chunk_id} chunk={chunk} />
+              <ChunkCard
+                key={chunk.id || chunk.chunk_id}
+                orgId={org_id}
+                projectId={project_id}
+                docId={doc_id}
+                chunk={chunk}
+              />
             ))}
           </div>
         )}
@@ -479,9 +510,17 @@ export default function Chunks() {
                     </button>
                     <button
                       onClick={handleAddConfirmSave}
+                      disabled={isSaving}
                       className="px-3 py-1.5 text-xs font-medium text-white bg-amber-600 hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600 rounded-md transition-colors shadow-sm cursor-pointer"
                     >
-                      Yes, create
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        "Yes, Create"
+                      )}
                     </button>
                   </div>
                 </div>

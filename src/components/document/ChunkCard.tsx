@@ -9,15 +9,32 @@ import {
   Check,
   X,
   TriangleAlert,
+  Loader2,
 } from "lucide-react";
-import { ChunkInterface } from "@/interfaces/ChunkInterface";
+import { ChunkInterface, ChunkUpdateInterface } from "@/interfaces/ChunkInterface";
+import { useChunkStore } from "@/store/chunkStore";
 
-export function ChunkCard({ chunk }: { chunk: ChunkInterface }) {
+export function ChunkCard({
+  orgId,
+  projectId,
+  docId,
+  chunk,
+}: {
+  orgId: string;
+  projectId: string;
+  docId: string;
+  chunk: ChunkInterface;
+}) {
+  const org_id = orgId;
+  const project_id = projectId;
+  const doc_id = docId;
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false); // Track confirmation state
   const [currentText, setCurrentText] = useState(chunk.text);
   const [editedText, setEditedText] = useState(chunk.text);
+  const { updateChunk } = useChunkStore();
 
   const handleEditClick = () => {
     setIsOpen(true); // Force open the collapsible to show the full textarea
@@ -42,14 +59,19 @@ export function ChunkCard({ chunk }: { chunk: ChunkInterface }) {
     setShowConfirm(true);
   };
 
-  const handleConfirmSave = () => {
-    const updatedChunk = { ...chunk, text: editedText };
-    console.log("Edited chunk saved:", updatedChunk);
+  const handleConfirmSave = async () => {
+    const updatedChunk: ChunkUpdateInterface = {
+      id: chunk.id,
+      text: editedText,
+    };
+    setIsSaving(true);
+    await updateChunk(org_id, project_id, doc_id, updatedChunk);
 
     // Update local state to reflect the changes immediately
     setCurrentText(editedText);
     setIsEditing(false);
     setShowConfirm(false);
+    setIsSaving(false);
   };
 
   return (
@@ -160,9 +182,17 @@ export function ChunkCard({ chunk }: { chunk: ChunkInterface }) {
                       </button>
                       <button
                         onClick={handleConfirmSave}
-                        className="px-3 py-1.5 text-xs font-medium text-white bg-amber-600 hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600 rounded-md transition-colors shadow-sm cursor-pointer"
+                        disabled={isSaving}
+                        className="px-3 py-1.5 text-xs font-medium text-white bg-amber-600 hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600 rounded-md transition-colors shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                       >
-                        Yes, save
+                        {isSaving ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            Updating...
+                          </>
+                        ) : (
+                          "Yes, save"
+                        )}
                       </button>
                     </div>
                   </div>

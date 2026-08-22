@@ -1,5 +1,9 @@
 import { create } from "zustand";
-import { ChunkInterface } from "@/interfaces/ChunkInterface";
+import {
+  ChunkInterface,
+  ChunkCreateInterface,
+  ChunkUpdateInterface,
+} from "@/interfaces/ChunkInterface";
 import { PaginationInterface } from "@/interfaces/CommonInterface";
 import { axiosClient } from "@/utils/axiosClient";
 
@@ -19,6 +23,18 @@ interface ChunkStore {
     id?: string,
     sort_by?: string,
     sort_order?: string,
+  ) => Promise<void>;
+  addChunk: (
+    orgId: string,
+    projectId: string,
+    docId: string,
+    payload: ChunkCreateInterface,
+  ) => Promise<void>;
+  updateChunk: (
+    orgId: string,
+    projectId: string,
+    docId: string,
+    payload: ChunkUpdateInterface,
   ) => Promise<void>;
 }
 
@@ -42,7 +58,7 @@ export const useChunkStore = create<ChunkStore>((set) => ({
   ) => {
     set({ isLoading: true });
     try {
-      const url = `/api/chunks/${orgId}/${projectId}/${docId}/chunks/list`;
+      const url = `/api/chunks/${orgId}/${projectId}/${docId}/list`;
 
       // Build params object dynamically to avoid sending undefined values
       const params: Record<string, any> = { page, limit, sort_by, sort_order };
@@ -64,6 +80,26 @@ export const useChunkStore = create<ChunkStore>((set) => ({
       set({ chunks: [], pagination: null });
     } finally {
       set({ isLoading: false });
+    }
+  },
+  addChunk: async (orgId, projectId, docId, body) => {
+    try {
+      const url = `/api/chunks/${orgId}/${projectId}/${docId}/add`;
+      const response = await axiosClient.post(url, body);
+      const data = response.data?.data ?? null;
+      return data;
+    } catch (error) {
+      console.log(error);
+    }
+  },
+  updateChunk: async (orgId, projectId, docId, body) => {
+    try {
+      const url = `/api/chunks/${orgId}/${projectId}/${docId}/update`;
+      const response = await axiosClient.put(url, body);
+      const data = response.data?.data ?? null;
+      return data;
+    } catch (error) {
+      console.log(error);
     }
   },
 }));

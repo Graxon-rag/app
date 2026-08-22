@@ -29,3 +29,8 @@ export interface ChunkCreateInterface {
   file_chunk_number: number;
   metadata?: Record<string, any>;
 }
+
+export interface ChunkUpdateInterface {
+  id: string;
+  text: string;
+}
