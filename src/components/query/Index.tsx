@@ -327,7 +327,7 @@ function ChunkCard({ chunk, index }: { chunk: QueryMetadataInterface; index: num
             <button
               type="button"
               onClick={() => setDetailsOpen((p) => !p)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-600 dark:text-zinc-300 transition text-[11px] font-semibold"
+              className="flex cursor-pointer items-center gap-1 px-2.5 py-1 rounded-md bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-600 dark:text-zinc-300 transition text-[11px] font-semibold"
             >
               {detailsOpen ? (
                 <>
@@ -689,7 +689,7 @@ export default function QueryIndex({ doc_id: propDocId }: QueryIndexProps) {
             <select
               value={queryType}
               onChange={(e) => setQueryType(e.target.value as QueryType)}
-              className="px-3 py-2 h-9 text-sm rounded-lg border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="px-3 py-2 h-9 text-sm rounded-lg cursor-pointer border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-primary-500"
             >
               <option value={QueryType.QUICK}>Quick</option>
 
@@ -709,7 +709,7 @@ export default function QueryIndex({ doc_id: propDocId }: QueryIndexProps) {
             <select
               value={queryDepth}
               onChange={(e) => setQueryDepth(e.target.value as QueryDepth)}
-              className="px-3 py-2 h-9 text-sm rounded-lg border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="px-3 py-2 h-9 text-sm rounded-lg cursor-pointer border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-1 focus:ring-primary-500"
             >
               <option value={QueryDepth.STANDARD}>Standard</option>
 
@@ -737,14 +737,14 @@ export default function QueryIndex({ doc_id: propDocId }: QueryIndexProps) {
           {/* Thinking Toggle */}
 
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400">
+            <label className="text-[10px] uppercase  tracking-wider font-semibold text-zinc-400">
               Agent Mode
             </label>
 
             <button
               type="button"
               onClick={() => setIsThinkingMode(!isThinkingMode)}
-              className={`flex items-center gap-2 h-9 px-3 rounded-lg border text-sm font-semibold transition-colors ${
+              className={`flex cursor-pointer items-center gap-2 h-9 px-3 rounded-lg border text-sm font-semibold transition-colors ${
                 isThinkingMode
                   ? "bg-primary-50 dark:bg-primary-900/30 border-primary-500 text-primary-700 dark:text-primary-300"
                   : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
@@ -786,7 +786,11 @@ export default function QueryIndex({ doc_id: propDocId }: QueryIndexProps) {
           disabled={isFetching || !inputQuery.trim()}
           className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 disabled:opacity-40 hover:opacity-90 transition"
         >
-          {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          {isFetching ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Send className="h-4 w-4 cursor-pointer" />
+          )}
         </button>
       </form>
 
