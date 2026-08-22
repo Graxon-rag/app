@@ -12,6 +12,7 @@ import {
   ChevronUp,
   ArrowLeft,
   ArrowRight,
+  ArrowDown,
   GitBranch,
   Search,
   BarChart2,
@@ -641,6 +642,12 @@ export default function QueryIndex({ doc_id: propDocId }: QueryIndexProps) {
 
   const hasMetadata = response?.metadata && response.metadata.length > 0;
 
+  // The answer is "live" once real answer tokens have started arriving during
+  // a stream — distinct from the reasoning/tool phase, where streamedAnswer
+  // is still empty.
+  const isAnswerLive = isStreaming && isThinkingMode && !!streamedAnswer;
+  const hasReasoning = isThinkingMode && (toolSteps.length > 0 || !!streamedThinking);
+
   return (
     <div className="space-y-6 w-full py-2 md:py-3 text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
       {/* ── Header ── */}
@@ -792,7 +799,7 @@ export default function QueryIndex({ doc_id: propDocId }: QueryIndexProps) {
           <div className="lg:col-span-2 space-y-5 w-full">
             {/* Thinking / Streaming Steps */}
 
-            {isThinkingMode && (toolSteps.length > 0 || streamedThinking) && (
+            {hasReasoning && (
               <div className="space-y-3 w-full">
                 {toolSteps.length > 0 && (
                   <Collapsible
@@ -816,22 +823,53 @@ export default function QueryIndex({ doc_id: propDocId }: QueryIndexProps) {
                 )}
 
                 {streamedThinking && (
-                  <Collapsible label="Thinking Process" icon={<BrainCircuit size={14} />}>
+                  <Collapsible
+                    label="Thinking Process"
+                    icon={<BrainCircuit size={14} />}
+                    // Open by default while reasoning is still in progress
+                    // (i.e. before real answer tokens start), collapsed once
+                    // the final answer takes over, so it doesn't compete for
+                    // attention.
+                    defaultOpen={isStreaming && !streamedAnswer}
+                  >
                     <p className="text-sm italic text-zinc-500 dark:text-zinc-400 leading-relaxed whitespace-pre-line break-words w-full">
                       {streamedThinking}
                     </p>
                   </Collapsible>
                 )}
+
+                {/* ── Separator: marks the transition from reasoning to the
+                    final answer below. ── */}
+                <div className="flex items-center gap-3 py-1">
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-zinc-200 dark:via-zinc-800 to-zinc-200 dark:to-zinc-800" />
+                  <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-600 whitespace-nowrap">
+                    <ArrowDown size={11} />
+                    Final Answer
+                  </span>
+                  <div className="h-px flex-1 bg-gradient-to-l from-transparent via-zinc-200 dark:via-zinc-800 to-zinc-200 dark:to-zinc-800" />
+                </div>
               </div>
             )}
 
             {/* ── Answer Display ── */}
 
             <div className="p-5 rounded-xl border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-sm space-y-3 w-full">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                <HelpCircle size={14} />
-                Answer Engine
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                  <HelpCircle size={14} />
+                  Answer Engine
+                </h3>
+
+                {isAnswerLive && (
+                  <span className="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-500">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                    </span>
+                    Live
+                  </span>
+                )}
+              </div>
 
               <div className="text-base leading-relaxed break-words text-zinc-800 dark:text-zinc-200 w-full prose prose-zinc dark:prose-invert max-w-none">
                 {displayAnswer ? (
@@ -901,7 +939,9 @@ export default function QueryIndex({ doc_id: propDocId }: QueryIndexProps) {
                     {displayAnswer}
                   </ReactMarkdown>
                 ) : isStreaming ? (
-                  <span className="animate-pulse text-zinc-400">Agent is processing...</span>
+                  <span className="animate-pulse text-zinc-400">
+                    {hasReasoning ? "Finalizing answer…" : "Agent is processing..."}
+                  </span>
                 ) : (
                   <span className="italic text-zinc-400">No answer generated.</span>
                 )}

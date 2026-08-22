@@ -105,8 +105,14 @@ export const useQueryStore = create<QueryStore>((set, get) => ({
 
           let eventType = "message";
           // IMPORTANT: eventData accumulates ALL "data:" lines in this chunk,
-          // joined with "\n", per the SSE spec. A single chunk can legitimately
-          // contain multiple "data:" lines (e.g. multi-line tokens).
+          // joined with "\n", per the SSE spec. A single event can legitimately
+          // span multiple "data:" lines -- this is how multi-paragraph /
+          // multi-line payloads (e.g. answer text with blank lines between
+          // paragraphs) are transmitted safely, since a literal newline
+          // inside one "data:" line would be indistinguishable from the
+          // "\n\n" event terminator. The backend is expected to split any
+          // payload with embedded newlines into one "data:" line per line
+          // of content; this loop reassembles them in order.
           const dataLines: string[] = [];
 
           const lines = chunk.split("\n");
@@ -118,10 +124,11 @@ export const useQueryStore = create<QueryStore>((set, get) => ({
             } else if (line.startsWith("event:")) {
               eventType = line.substring(6).trim();
             } else if (line.startsWith("data: ")) {
-              // DO NOT trim — this is the actual token payload. Trimming here
-              // silently deletes spaces/newlines between words and paragraphs,
-              // which breaks both plain-text readability and Markdown block
-              // structure (headings, lists, blank-line-separated paragraphs).
+              // DO NOT trim -- this is the actual payload content. Trimming
+              // here silently deletes spaces/newlines between words and
+              // paragraphs, which breaks both plain-text readability and
+              // Markdown block structure (headings, lists, blank-line-
+              // separated paragraphs).
               dataLines.push(line.substring(6));
             } else if (line.startsWith("data:")) {
               dataLines.push(line.substring(5));
@@ -134,8 +141,8 @@ export const useQueryStore = create<QueryStore>((set, get) => ({
           try {
             parsedData = JSON.parse(eventData);
           } catch (e) {
-            /* ignore JSON error for pure text — eventData is used as-is,
-               with its original whitespace intact */
+            /* ignore JSON error for pure text -- eventData is used as-is,
+               with its original whitespace and line breaks intact */
           }
 
           // Update store incrementally based on SSE type
@@ -182,6 +189,8 @@ export const useQueryStore = create<QueryStore>((set, get) => ({
               lexical_engine_analysis: parsedData.lexical_engine_analysis || undefined,
               lexical_engine_chunk_ids: parsedData.lexical_engine_chunk_ids || [],
             };
+          } else if (eventType === "error") {
+            console.error("Stream error event:", parsedData);
           }
         }
       }
