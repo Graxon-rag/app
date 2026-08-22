@@ -595,11 +595,11 @@ export default function QueryIndex({ doc_id: propDocId }: QueryIndexProps) {
   // Query Settings
   const [queryType, setQueryType] = useState<QueryType>(QueryType.SMART);
 
-  const [queryDepth, setQueryDepth] = useState<QueryDepth>(QueryDepth.STANDARD);
+  const [queryDepth, setQueryDepth] = useState<QueryDepth>(QueryDepth.ADVANCED);
 
   const [topK, setTopK] = useState<number>(5);
 
-  const [isThinkingMode, setIsThinkingMode] = useState<boolean>(false);
+  const [isThinkingMode, setIsThinkingMode] = useState<boolean>(true);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
