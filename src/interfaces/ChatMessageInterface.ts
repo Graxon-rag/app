@@ -18,7 +18,6 @@ export interface ChatMessageGetInterface {
   chat_id: string;
   role: string;
   message: string;
-  number: number;
   chat_metadata?: Record<string, any> | null;
   created_at: string;
   updated_at: string;

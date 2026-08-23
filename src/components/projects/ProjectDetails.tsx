@@ -22,10 +22,10 @@ type TabKey =
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "details", label: "Details" },
+  { key: "upload", label: "Upload" },
   { key: "query", label: "Query" },
   { key: "chats", label: "Chats" },
 
-  { key: "upload", label: "Upload" },
   { key: "documents", label: "Documents" },
   { key: "config", label: "Config" },
   { key: "variables", label: "Variables" },
