@@ -1,6 +1,7 @@
 import React from "react";
 import { Bot, User, Zap, Search } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { ChatMessageGetInterface } from "@/interfaces/ChatMessageInterface";
 import { Collapsible } from "./Collapsible";
 import { ChunkCard } from "./ChunkCard";
@@ -43,7 +44,37 @@ export default function ChatMessageItem({ message }: ChatMessageItemProps) {
           {isUser ? (
             <p className="whitespace-pre-wrap break-words">{message.message}</p>
           ) : (
-            <ReactMarkdown>{message.message}</ReactMarkdown>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                // Custom styles for Markdown tables and text
+                table: ({ children }) => (
+                  <div className="overflow-x-auto w-full my-4">
+                    <table className="min-w-full border-collapse border border-zinc-300 dark:border-zinc-700 text-sm">
+                      {children}
+                    </table>
+                  </div>
+                ),
+                th: ({ children }) => (
+                  <th className="border border-zinc-300 dark:border-zinc-700 bg-zinc-200 dark:bg-zinc-800 px-3 py-2 text-left font-semibold">
+                    {children}
+                  </th>
+                ),
+                td: ({ children }) => (
+                  <td className="border border-zinc-300 dark:border-zinc-700 px-3 py-2 align-top">
+                    {children}
+                  </td>
+                ),
+                p: ({ children }) => <p className="mb-3 last:mb-0">{children}</p>,
+                ul: ({ children }) => <ul className="list-disc pl-6 mb-3 space-y-1">{children}</ul>,
+                ol: ({ children }) => (
+                  <ol className="list-decimal pl-6 mb-3 space-y-1">{children}</ol>
+                ),
+                li: ({ children }) => <li className="leading-6">{children}</li>,
+              }}
+            >
+              {message.message}
+            </ReactMarkdown>
           )}
         </div>
 
@@ -57,7 +88,7 @@ export default function ChatMessageItem({ message }: ChatMessageItemProps) {
                 badge={meta.chunks.length}
                 defaultOpen={false}
               >
-                <div className="space-y-3 w-full">
+                <div className="space-y-3 w-full max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                   {meta.chunks.map((chunk: any, index: number) => (
                     <ChunkCard key={chunk.chunk_id || index} chunk={chunk} index={index} />
                   ))}

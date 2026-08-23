@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import remarkGfm from "remark-gfm";
 import { useNavigate, useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import {
@@ -878,6 +879,7 @@ export default function QueryIndex({ doc_id: propDocId }: QueryIndexProps) {
               <div className="text-base leading-relaxed break-words text-zinc-800 dark:text-zinc-200 w-full prose prose-zinc dark:prose-invert max-w-none">
                 {displayAnswer ? (
                   <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
                     components={{
                       h1: ({ children }) => (
                         <h1 className="text-2xl font-bold mt-4 mb-3">{children}</h1>
