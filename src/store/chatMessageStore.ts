@@ -47,15 +47,16 @@ export const useChatMessageStore = create<ChatMessageStore>((set, get) => ({
       const response = await axiosClient.get<{ data: ChatMessageListInterface }>(url);
       const result = response.data?.data;
 
-      set({
-        messages: result?.data ?? [],
+      set((state) => ({
+        messages: page === 1 ? (result?.data ?? []) : [...state.messages, ...(result?.data ?? [])],
+
         pagination: result?.pagination ?? {
           total_pages: 1,
           current_page: page,
           current_limit: limit,
         },
         isLoading: false,
-      });
+      }));
     } catch (error) {
       console.error(error);
       set({ isLoading: false });
