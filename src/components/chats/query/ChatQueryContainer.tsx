@@ -11,9 +11,15 @@ import { ChatLiveResponse } from "./ChatLiveResponse";
 
 interface ChatQueryContainerProps {
   doc_id?: string | null;
+  isSidebarOpen: boolean;
+  toggleSidebar: () => void;
 }
 
-export default function ChatQueryContainer({ doc_id: propDocId }: ChatQueryContainerProps) {
+export default function ChatQueryContainer({
+  doc_id: propDocId,
+  isSidebarOpen,
+  toggleSidebar,
+}: ChatQueryContainerProps) {
   const { org_id, project_id } = useParams<{ org_id: string; project_id: string }>();
   const [searchParams] = useSearchParams();
   const chatId = searchParams.get("chat_id");
@@ -105,6 +111,8 @@ export default function ChatQueryContainer({ doc_id: propDocId }: ChatQueryConta
           setTopK={setTopK}
           isThinkingMode={isThinkingMode}
           setIsThinkingMode={setIsThinkingMode}
+          isSidebarOpen={isSidebarOpen}
+          toggleSidebar={toggleSidebar}
         />
       </div>
 
@@ -126,7 +134,7 @@ export default function ChatQueryContainer({ doc_id: propDocId }: ChatQueryConta
       />
 
       {/* Input Form at the bottom */}
-      <div className="shrink-0 mt-4">
+      <div className="shrink-0 m-4">
         <ChatInputForm
           inputQuery={inputQuery}
           setInputQuery={setInputQuery}
