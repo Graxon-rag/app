@@ -65,20 +65,21 @@ export default function ChatQueryContainer({
     }
   };
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputQuery.trim() || !org_id || !project_id) return;
+  const handleSearch = async (cleanQuery: string, mentionedDocId?: string) => {
+    if (!cleanQuery.trim() || !org_id || !project_id) return;
 
     setResponse(null);
-    const currentQuery = inputQuery;
     setInputQuery(""); // Clear input early for better UX
+
+    // Decide which document ID to use (Mentioned takes priority over tab default)
+    const finalDocumentId = mentionedDocId || doc_id;
 
     const data = await query({
       org_id,
       project_id,
       chat_id: chatId || undefined,
-      query: currentQuery,
-      document_id: doc_id,
+      query: cleanQuery,
+      document_id: finalDocumentId, // Passes the mentioned doc ID if one exists
       top_k: topK,
       query_type: queryType,
       query_depth: queryDepth,
@@ -86,11 +87,13 @@ export default function ChatQueryContainer({
     });
 
     if (data) {
-      setResponse(data as QueryResponse);
-      // Optional: Refresh the message list after generating an answer to append the saved records
+      // Refresh the message list after generating an answer to append the saved records
       if (chatId) {
-        listMessages(org_id, project_id, chatId, 1, 20);
+        // Await this to ensure the list is refreshed properly
+        await listMessages(org_id, project_id, chatId, 1, 20);
       }
+
+      // Clear the live streaming state so it relies entirely on the newly fetched history
       setResponse(null);
       clearStream();
     }
