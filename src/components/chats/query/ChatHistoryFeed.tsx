@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ChatMessageGetInterface } from "@/interfaces/ChatMessageInterface"; // Adjust path if needed
+import { ChatMessageGetInterface } from "@/interfaces/ChatMessageInterface";
 import ChatMessageItem from "./ChatMessageItem";
 
 interface ChatHistoryFeedProps {
@@ -12,25 +12,20 @@ export function ChatHistoryFeed({ messages, onLoadMore, hasMore }: ChatHistoryFe
   const sentinelRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Local state to lock the fetch so it only triggers once per page
   const [isLoading, setIsLoading] = useState(false);
-  const prevMessageCount = useRef(messages.length);
 
-  // 1. Release the loading lock when new messages arrive from the backend
+  // Release the loading lock whenever the messages array updates from the backend
+  // Since Zustand creates a new array reference on every fetch, this will reliably unlock
+  // even if the message count stays exactly the same.
   useEffect(() => {
-    if (messages.length !== prevMessageCount.current) {
-      setIsLoading(false);
-      prevMessageCount.current = messages.length;
-    }
-  }, [messages.length]);
+    setIsLoading(false);
+  }, [messages]);
 
-  // 2. Set up the Intersection Observer
   useEffect(() => {
     if (!hasMore) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        // If the sentinel comes into view and we aren't already loading...
         if (entries[0].isIntersecting && !isLoading) {
           setIsLoading(true);
           onLoadMore();
@@ -38,7 +33,7 @@ export function ChatHistoryFeed({ messages, onLoadMore, hasMore }: ChatHistoryFe
       },
       {
         root: scrollContainerRef.current,
-        rootMargin: "100px", // Trigger 100px before they actually hit the absolute top
+        rootMargin: "100px",
         threshold: 0.1,
       },
     );
@@ -55,22 +50,15 @@ export function ChatHistoryFeed({ messages, onLoadMore, hasMore }: ChatHistoryFe
       ref={scrollContainerRef}
       className="flex-1 overflow-y-auto flex flex-col-reverse py-4 px-2 space-y-4 space-y-reverse custom-scrollbar"
     >
-      {/* 
-        In flex-col-reverse, elements are visually bottom-to-top.
-        The first element maps to the visual bottom (newest). 
-      */}
       {messages.map((msg) => (
         <ChatMessageItem key={msg.id} message={msg} />
       ))}
 
-      {/* 
-        This sentinel sits at the end of the list, which means it sits 
-        at the VISUAL TOP of the chat. 
-      */}
-      <div ref={sentinelRef} className="h-1 w-full shrink-0 opacity-0 pointer-events-none" />
+      {hasMore && (
+        <div ref={sentinelRef} className="h-1 w-full shrink-0 opacity-0 pointer-events-none" />
+      )}
 
-      {/* Optional: A small loading spinner when fetching older history */}
-      {isLoading && (
+      {isLoading && hasMore && (
         <div className="w-full text-center py-2 text-xs font-medium text-zinc-400 shrink-0">
           Loading messages...
         </div>
