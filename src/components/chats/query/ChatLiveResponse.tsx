@@ -41,6 +41,8 @@ export function ChatLiveResponse({
   const isAnswerLive = isStreaming && isThinkingMode && !!displayAnswer;
   const hasReasoning = isThinkingMode && (toolSteps.length > 0 || !!streamedThinking);
 
+  if (!isStreaming) return null;
+
   return (
     <div className="grid lg:grid-cols-3 gap-6 items-start w-full border-t border-zinc-200 dark:border-zinc-800 pt-6 mt-4">
       <div className="lg:col-span-2 space-y-5 w-full">

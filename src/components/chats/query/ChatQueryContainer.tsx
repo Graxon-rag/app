@@ -90,6 +90,8 @@ export default function ChatQueryContainer({
       if (chatId) {
         listMessages(org_id, project_id, chatId, 1, 20);
       }
+      setResponse(null);
+      clearStream();
     }
   };
 
