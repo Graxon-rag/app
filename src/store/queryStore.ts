@@ -10,16 +10,20 @@ export interface ToolStep {
   status: "running" | "done";
 }
 
+// Extend your query interface or handle it inline
+export interface ChatQueryPayload extends QueryInterface {
+  chat_id?: string;
+  thinking?: boolean;
+}
+
 interface QueryStore {
-  // Standard loading state
   isLoading: boolean;
-  // Streaming specific states
   isStreaming: boolean;
   streamedAnswer: string;
   streamedThinking: string;
   toolSteps: ToolStep[];
 
-  query: (payload: QueryInterface & { thinking?: boolean }) => Promise<QueryResponse | null>;
+  query: (payload: ChatQueryPayload) => Promise<QueryResponse | null>;
   clearStream: () => void;
 }
 
@@ -53,12 +57,15 @@ export const useQueryStore = create<QueryStore>((set, get) => ({
       urlParams += `&document_id=${payload.document_id}`;
     }
 
+    // Determine the base route: Chat endpoint vs Project endpoint
+    const endpointPath = payload.chat_id
+      ? `/api/query/${payload.org_id}/projects/${payload.project_id}/chats/${payload.chat_id}`
+      : `/api/query/${payload.org_id}/projects/${payload.project_id}`;
+
     if (!thinking) {
       set({ isLoading: true });
       try {
-        const response = await axiosClient.get(
-          `/api/query/${payload.org_id}/projects/${payload.project_id}?${urlParams}`,
-        );
+        const response = await axiosClient.get(`${endpointPath}?${urlParams}`);
         const result = response.data;
         if (result?.success) return result.data ?? { answer: "No answer found." };
         return { answer: result?.message ?? "No answer found." };
@@ -75,12 +82,11 @@ export const useQueryStore = create<QueryStore>((set, get) => ({
 
     try {
       const baseUrl = axiosClient.defaults.baseURL || "";
-      const url = `${baseUrl}/api/query/${payload.org_id}/projects/${payload.project_id}?${urlParams}`;
+      const url = `${baseUrl}${endpointPath}?${urlParams}`;
 
       const res = await fetch(url, {
         method: "GET",
         headers: {
-          // Inherit Auth headers from Axios configuration if needed
           ...(axiosClient.defaults.headers.common as any),
         },
       });
@@ -104,31 +110,15 @@ export const useQueryStore = create<QueryStore>((set, get) => ({
           buffer = buffer.slice(eventIndex + 2);
 
           let eventType = "message";
-          // IMPORTANT: eventData accumulates ALL "data:" lines in this chunk,
-          // joined with "\n", per the SSE spec. A single event can legitimately
-          // span multiple "data:" lines -- this is how multi-paragraph /
-          // multi-line payloads (e.g. answer text with blank lines between
-          // paragraphs) are transmitted safely, since a literal newline
-          // inside one "data:" line would be indistinguishable from the
-          // "\n\n" event terminator. The backend is expected to split any
-          // payload with embedded newlines into one "data:" line per line
-          // of content; this loop reassembles them in order.
           const dataLines: string[] = [];
 
           const lines = chunk.split("\n");
           for (const line of lines) {
             if (line.startsWith("event: ")) {
-              // Safe to trim: event names ("token", "thinking", "tool_call", ...)
-              // never carry meaningful leading/trailing whitespace.
               eventType = line.substring(7).trim();
             } else if (line.startsWith("event:")) {
               eventType = line.substring(6).trim();
             } else if (line.startsWith("data: ")) {
-              // DO NOT trim -- this is the actual payload content. Trimming
-              // here silently deletes spaces/newlines between words and
-              // paragraphs, which breaks both plain-text readability and
-              // Markdown block structure (headings, lists, blank-line-
-              // separated paragraphs).
               dataLines.push(line.substring(6));
             } else if (line.startsWith("data:")) {
               dataLines.push(line.substring(5));
@@ -141,11 +131,9 @@ export const useQueryStore = create<QueryStore>((set, get) => ({
           try {
             parsedData = JSON.parse(eventData);
           } catch (e) {
-            /* ignore JSON error for pure text -- eventData is used as-is,
-               with its original whitespace and line breaks intact */
+            /* ignore JSON error for pure text */
           }
 
-          // Update store incrementally based on SSE type
           if (eventType === "thinking") {
             set((state) => ({
               streamedThinking: state.streamedThinking + (parsedData ?? ""),
@@ -182,7 +170,6 @@ export const useQueryStore = create<QueryStore>((set, get) => ({
               return { toolSteps: newSteps };
             });
           } else if (eventType === "metadata") {
-            // Final payload from the chain
             finalResponse = {
               answer: get().streamedAnswer,
               metadata: parsedData.chunks || [],

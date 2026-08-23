@@ -41,7 +41,7 @@ export default function ChatSidebar() {
   };
 
   return (
-    <aside className="w-80 border-r border-zinc-200 dark:border-zinc-800 flex flex-col h-full bg-zinc-50/50 dark:bg-zinc-900/50">
+    <aside className="w-65 border-r border-zinc-200 dark:border-zinc-800 flex flex-col h-full bg-zinc-50/50 dark:bg-zinc-900/50">
       <div className="p-4 border-b border-zinc-200 dark:border-zinc-800">
         <button
           onClick={handleNewChat}

@@ -61,7 +61,7 @@ export default function ChatListItem({
         <DropdownMenu.Trigger asChild>
           <button
             onClick={(e) => e.stopPropagation()}
-            className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-500 transition-opacity"
+            className="opacity-0 group-hover:opacity-100 cursor-pointer p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-500 transition-opacity"
           >
             <MoreVertical size={14} />
           </button>
