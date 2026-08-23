@@ -653,20 +653,22 @@ export default function QueryIndex({ doc_id: propDocId }: QueryIndexProps) {
     <div className="space-y-6 w-full py-2 md:py-3 text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
       {/* ── Header ── */}
 
-      <button
-        type="button"
-        onClick={handleBack}
-        className="mb-4 inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium cursor-pointer text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
-      >
-        <ArrowLeft className="h-4 w-4" strokeWidth={2} />
-        Back to Documents
-      </button>
+      {doc_id && (
+        <button
+          type="button"
+          onClick={handleBack}
+          className="mb-4 inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium cursor-pointer text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
+        >
+          <ArrowLeft className="h-4 w-4" strokeWidth={2} />
+          Back to Documents
+        </button>
+      )}
 
       <div className="flex flex-col xl:flex-row xl:items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-5 gap-4">
         <div>
           <h1 className="text-xl font-semibold flex items-center gap-2">
             <FileText className="h-5 w-5 text-primary-600 dark:text-primary-400" />
-            Document Query Engine
+            Query Engine
           </h1>
 
           {doc_id && (

@@ -234,7 +234,7 @@ export default function Chunks() {
       <button
         type="button"
         onClick={handleBack}
-        className="mb-4 inline-flex items-center gap-2 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm font-medium cursor-pointer text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors shadow-sm"
+        className="mb-4 inline-flex mx-5 items-center gap-2 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm font-medium cursor-pointer text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors shadow-sm"
       >
         <ArrowLeft className="h-4 w-4" strokeWidth={2} /> Back to Documents
       </button>
