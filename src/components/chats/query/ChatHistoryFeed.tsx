@@ -33,7 +33,7 @@ export function ChatHistoryFeed({ messages, onLoadMore, hasMore }: ChatHistoryFe
       },
       {
         root: scrollContainerRef.current,
-        rootMargin: "100px",
+        rootMargin: "200px",
         threshold: 0.1,
       },
     );
