@@ -13,11 +13,11 @@ interface ChatInputFormProps {
 
 const HINT_DISMISSED_KEY = "chat-mention-hint-dismissed";
 
-// Watches the `dark` class on <html> (or whatever your Tailwind dark-mode
-// root is) so we can resolve real colors for react-mentions' inline styles.
-// CSS variables aren't reliable here because react-mentions applies these
-// as inline styles on elements whose exact DOM placement/portal behavior
-// we don't control, so var() inheritance can silently fail.
+// Watches the `dark` class on <html> (adjust target if your app toggles
+// dark mode differently) so we can resolve real colors for react-mentions'
+// inline styles. CSS variables are unreliable here since react-mentions
+// applies these as inline styles on elements we don't control the mounting
+// of, so var() inheritance can silently fail.
 function useIsDarkMode() {
   const [isDark, setIsDark] = useState(
     () => typeof document !== "undefined" && document.documentElement.classList.contains("dark"),
@@ -46,13 +46,6 @@ export function ChatInputForm({
   const [hintDismissed, setHintDismissed] = useState(true);
   const isDark = useIsDarkMode();
   const formRef = useRef<HTMLFormElement>(null);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      formRef.current?.requestSubmit();
-    }
-  };
 
   useEffect(() => {
     setHintDismissed(sessionStorage.getItem(HINT_DISMISSED_KEY) === "true");
@@ -134,22 +127,43 @@ export function ChatInputForm({
     );
   };
 
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Extracted so both the form's normal onSubmit (click / native Enter)
+  // and the Ctrl+Enter shortcut call the exact same logic.
+  const submitQuery = useCallback(() => {
     if (!inputQuery.trim() || isFetching) return;
 
+    // Matches @[display](id) markup produced by react-mentions
     const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
     let matchedDocId: string | undefined = undefined;
 
+    // Strip the mention out entirely rather than replacing it with the
+    // filename — the doc is passed separately via matchedDocId, it
+    // shouldn't also end up as text in the query sent to the backend.
     const cleanQuery = inputQuery
       .replace(mentionRegex, (match, display, id) => {
         matchedDocId = id;
         return "";
       })
-      .replace(/\s{2,}/g, " ")
+      .replace(/\s{2,}/g, " ") // collapse leftover double spaces
       .trim();
 
     handleSearch(cleanQuery, matchedDocId);
+  }, [inputQuery, isFetching, handleSearch]);
+
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitQuery();
+  };
+
+  // Capture phase so this runs BEFORE react-mentions' own internal keydown
+  // handling (e.g. its Enter/Tab/arrow handling for the suggestions list),
+  // which means Ctrl+Enter works reliably even while the @ dropdown is open.
+  const handleKeyDownCapture = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      e.stopPropagation();
+      submitQuery();
+    }
   };
 
   // Resolved (non-CSS-var) styles so the suggestions dropdown always
@@ -157,7 +171,8 @@ export function ChatInputForm({
   const mentionsInputStyle = useMemo(() => getMentionsInputStyle(isDark), [isDark]);
 
   return (
-    <form onSubmit={onSubmit} className="relative w-full shrink-0">
+    <form ref={formRef} onSubmit={onSubmit} className="relative w-full shrink-0">
+      {/* Dismissible hint for the @ mention feature — resets each new tab/session */}
       {!hintDismissed && (
         <div className="flex items-center justify-between gap-2 mb-2 px-3 py-1.5 rounded-lg bg-primary-500/10 border border-primary-500/20 text-xs text-primary-700 dark:text-primary-300">
           <span className="flex items-center gap-1.5">
@@ -177,6 +192,7 @@ export function ChatInputForm({
       )}
 
       <div
+        onKeyDownCapture={handleKeyDownCapture}
         className="relative w-full rounded-xl border shadow-sm focus-within:ring-2 focus-within:ring-primary-500/20 transition-all 
         bg-white dark:bg-zinc-900 
         border-zinc-200 dark:border-zinc-800
@@ -185,8 +201,7 @@ export function ChatInputForm({
         <MentionsInput
           value={inputQuery}
           onChange={(e, newValue) => setInputQuery(newValue)}
-          onKeyDown={handleKeyDown}
-          placeholder="Ask a question... type @ to mention a specific document"
+          placeholder="Ask a question... type @ to mention a specific document (Ctrl+Enter to send)"
           disabled={isFetching}
           className="w-full text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 mentions-flip-up"
           style={mentionsInputStyle}
@@ -222,6 +237,13 @@ export function ChatInputForm({
         </span>
       )}
 
+      {/* 
+        react-mentions positions its suggestion list absolutely, anchored
+        below the caret, with no viewport-aware flipping. Since this input
+        sits at the bottom of the chat, force the dropdown to open upward
+        and give it more visible height. !important is required because
+        the library sets top/bottom via inline style.
+      */}
       <style>{`
         .mentions-flip-up > div:last-child {
           top: auto !important;
