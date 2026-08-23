@@ -22,6 +22,7 @@ const ProjectDetail = lazy(() => import("@/pages/org/ProjectDetail"));
 const DocumentQuery = lazy(() => import("@/pages/org/DocumentQuery"));
 const DocumentViewer = lazy(() => import("@/pages/org/DocumentViewer"));
 const Chunks = lazy(() => import("@/pages/org/Chunks"));
+const Chats = lazy(() => import("@/pages/org/Chats"));
 
 export default function App() {
   return (
@@ -39,6 +40,11 @@ export default function App() {
               <Route path="projects/:project_id/docs/:doc_id/query" element={<DocumentQuery />} />
               <Route path="projects/:project_id/docs/:doc_id/view" element={<DocumentViewer />} />
               <Route path="projects/:project_id/docs/:doc_id/chunks" element={<Chunks />} />
+              <Route
+                path="projects/:project_id/docs/:doc_id/chunks/:chunk_id"
+                element={<Chunks />}
+              />
+              <Route path="projects/:project_id/chats" element={<Chats />} />
               <Route path="sparse-models" element={<SparseModels />} />
               <Route path="rerankers" element={<Rerankers />} />
               <Route path="llm-models" element={<LLMModels />} />

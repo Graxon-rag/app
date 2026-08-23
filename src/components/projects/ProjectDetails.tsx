@@ -7,6 +7,7 @@ import QueryTab from "@/components/projects/QueryTab";
 import ConfigTab from "@/components/projects/ConfigTab";
 import WebhookTab from "@/components/projects/WebhookTab";
 import { VariablesDetailSection } from "./VariablesDetailSection";
+import ChatLayout from "../chats/ChatLayout";
 
 type TabKey =
   | "details"
@@ -16,11 +17,14 @@ type TabKey =
   | "upload"
   | "documents"
   | "webhooks"
-  | "danger-zone";
+  | "danger-zone"
+  | "chats";
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "details", label: "Details" },
   { key: "query", label: "Query" },
+  { key: "chats", label: "Chats" },
+
   { key: "upload", label: "Upload" },
   { key: "documents", label: "Documents" },
   { key: "config", label: "Config" },
@@ -159,6 +163,12 @@ function ProjectDetails() {
         {tab === "documents" && org_id && project_id && (
           <div className="flex flex-col gap-6 my-6 mt-10">
             <DocumentTable orgId={org_id} projectId={project_id} />
+          </div>
+        )}
+
+        {tab === "chats" && org_id && project_id && (
+          <div className="flex h-[calc(100vh-160px)] w-full border dark:border-zinc-800 rounded-xl overflow-hidden bg-white dark:bg-zinc-950">
+            <ChatLayout />
           </div>
         )}
 
